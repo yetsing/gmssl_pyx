@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 import urllib.request
 import shutil
 import subprocess
@@ -7,6 +8,9 @@ import tarfile
 
 from setuptools.command.build_ext import build_ext
 from distutils.core import setup, Extension
+
+
+is_windows = sys.platform.startswith("win32")
 
 
 def download_source_code():
@@ -59,7 +63,10 @@ def compile_gmssl():
     os.chdir(build_dir)
     subprocess.check_call("cmake .. -DBUILD_SHARED_LIBS=OFF", shell=True)
     # 编译好的静态库位于 GmSSL-3.1.0/build/bin/libgmssl.a
-    subprocess.check_call("make && make test", shell=True)
+    if is_windows:
+        subprocess.check_call("nmake && nmake test", shell=True)
+    else:
+        subprocess.check_call("make && make test", shell=True)
 
     # 切换回之前的目录
     os.chdir(cwd)
@@ -84,7 +91,21 @@ extension = Extension(
 setup(
     name="gmssl_pyx",
     description="python wrapper of GmSSL",
-    version="1.0",
+    version="0.0.1",
+    url="https://github.com/yetsing/gmssl_pyx",
+    author="yeqing",
+    license="Apache Software License",
+    classifiers=[
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: C",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+    ],
+    python_requires=">=3.7",
+    keywords="gmssl",
+    packages=[
+        "gmssl_pyx",
+    ],
     ext_modules=[extension],
     cmdclass={"build_ext": CompileGmSSLLibrary},
 )
