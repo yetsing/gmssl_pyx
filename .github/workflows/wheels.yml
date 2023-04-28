@@ -13,7 +13,6 @@ on: [push, pull_request]
 jobs:
   build_wheels:
     name: Build ${{ matrix.archs }} ${{ matrix.build }} wheels on ${{ matrix.os }}
-    needs: [lint]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
