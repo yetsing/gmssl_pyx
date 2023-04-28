@@ -1,2 +1,3 @@
 # gmssl_pyx
-python extension for gmssl
+
+python wrapper of GmSSL
