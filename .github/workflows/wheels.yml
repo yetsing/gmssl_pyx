@@ -12,32 +12,41 @@ on: [push, pull_request]
 
 jobs:
   build_wheels:
-    name: Build ${{ matrix.archs }} ${{ matrix.build }} wheels on ${{ matrix.os }}
+    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04]
-        archs: ["x86_64, i686", "aarch64", "ppc64le", "s390x"]
-        build: ["manylinux", "musllinux"]
         include:
+          # Window 64 bit
+          # Note: windows-2019 is needed for older Python versions:
+          # https://github.com/scikit-learn/scikit-learn/issues/22530
           - os: windows-2019
-            archs: "AMD64"
-          - os: windows-2019
-            archs: "x86"
-          - os: windows-2019
-            archs: "ARM64"
+            python: 37
+            platform_id: win_amd64
+
+          # Linux 64 bit manylinux
+          - os: ubuntu-20.04
+            python: 37
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux
+
+          # MacOS x86_64
           - os: macos-11
-            archs: "x86_64, arm64"
+            python: 37
+            platform_id: macosx_x86_64
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Build wheels
+      - name: Build and test wheels
         uses: pypa/cibuildwheel@v2.12.3
+        env:
+          CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+          CIBW_TEST_COMMAND: bash {project}/run_test.sh
 
-      - uses: actions/upload-artifact@v3
-        with:
-          path: ./wheelhouse/*.whl
+#      - uses: actions/upload-artifact@v3
+#        with:
+#          path: ./wheelhouse/*.whl
 
   build_sdist:
     name: Build source distribution
@@ -48,9 +57,9 @@ jobs:
       - name: Build sdist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v3
-        with:
-          path: dist/*.tar.gz
+#      - uses: actions/upload-artifact@v3
+#        with:
+#          path: dist/*.tar.gz
 
 #  upload_pypi:
 #    needs: [build_wheels, build_sdist]
