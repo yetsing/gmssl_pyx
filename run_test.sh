@@ -2,6 +2,9 @@
 
 set -ex
 
-source venv/bin/activate
+if [[ -f "venv/bin/activate" ]]
+then
+  source venv/bin/activate
+fi
 
 python -m unittest discover tests

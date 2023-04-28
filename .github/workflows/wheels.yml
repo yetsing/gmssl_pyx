@@ -28,7 +28,7 @@ jobs:
           - os: ubuntu-20.04
             python: 37
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux
+            manylinux_image: manylinux1
 
           # MacOS x86_64
           - os: macos-11
