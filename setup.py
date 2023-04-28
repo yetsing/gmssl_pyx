@@ -40,6 +40,9 @@ def compile_gmssl():
     append_text = "add_compile_options(-fPIC)"
     with open(cmake_filename, "r") as f:
         text = f.read()
+        # rand_unix.需要使用 getentropy
+        # getentropy 在老版本的Linux发行版和glibc中不存在
+        text = text.replace('rand_unix.c', 'rand.c')
     if append_text not in text:
         # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
         sign = "project(GmSSL)"
