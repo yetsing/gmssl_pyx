@@ -31,7 +31,7 @@ jobs:
             manylinux_image: manylinux1
 
           # MacOS x86_64
-          - os: macos-11
+          - os: macos-latest
             python: 37
             platform_id: macosx_x86_64
 
