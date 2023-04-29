@@ -34,18 +34,17 @@ def compile_gmssl():
     # 1.下载源码并解压
     download_source_code()
 
+    os.chdir("GmSSL-3.1.0")
     if not is_windows:
         # 2. 修改 CMakeLists.txt ，直接编译会报错
         # /usr/bin/ld: ./GmSSL-3.1.0/build/bin/libgmssl.a(sm2_key.c.o): relocation R_X86_64_PC32 against symbol `stderr@@GLIBC_2.2.5' can not be used when making a shared object; recompile with -fPIC
-        cmake_filename = "GmSSL-3.1.0/CMakeLists.txt"
+        cmake_filename = "CMakeLists.txt"
         append_text = "add_compile_options(-fPIC)"
         with open(cmake_filename, "r") as f:
             text = f.read()
             # rand_unix.需要使用 getentropy
             # getentropy 在老版本的Linux发行版和glibc中不存在
         text = text.replace('rand_unix.c', 'rand.c')
-        # macos Symbol not found: _kSecRandomDefault
-        text = text.replace('-framework Security', '-framework Security -framework Foundation')
         # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
         sign = "project(GmSSL)"
         append_pos = text.find(sign) + len(sign)
@@ -56,11 +55,17 @@ def compile_gmssl():
                 text[append_pos:],
             ]
         )
-        with open("GmSSL-3.1.0/CMakeLists.txt", "w") as f:
+        with open(cmake_filename, "w") as f:
             f.write(new_text)
+        # macos Symbol not found: _kSecRandomDefault
+        with open("src/rand_apple.c", "r") as f:
+            text = f.read()
+        text = text.replace(
+            '#include <Security/Security.h>',
+            '#include <Security/SecRandom.h>\n#include <Security/Security.h>',
+        )
 
     # 3.编译静态库
-    os.chdir("GmSSL-3.1.0")
     if os.path.exists('build'):
         # 删除之前的构建，重新生成
         shutil.rmtree('build')
