@@ -26,51 +26,29 @@ def download_source_code():
 
 
 def compile_gmssl():
-    # 静态库存在就不编译了，节约时间
-    if os.path.exists("GmSSL-3.1.0/build/bin/libgmssl.a"):
-        return
     cwd = os.getcwd()
     # 下载 GmSSL 库编译成静态库
     # 1.下载源码并解压
     download_source_code()
 
     os.chdir("GmSSL-3.1.0")
-    if not is_windows:
+    if sys.platform.startswith("linux"):
         # 2. 修改 CMakeLists.txt ，直接编译会报错
         # /usr/bin/ld: ./GmSSL-3.1.0/build/bin/libgmssl.a(sm2_key.c.o): relocation R_X86_64_PC32 against symbol `stderr@@GLIBC_2.2.5' can not be used when making a shared object; recompile with -fPIC
         cmake_filename = "CMakeLists.txt"
-        append_text = "add_compile_options(-fPIC)"
         with open(cmake_filename, "r") as f:
             text = f.read()
             # rand_unix.需要使用 getentropy
             # getentropy 在老版本的Linux发行版和glibc中不存在
         text = text.replace("rand_unix.c", "rand.c")
-        # macos Symbol not found: _kSecRandomDefault
-        # text = text.replace(
-        #     "-framework Security",
-        #     "-framework Security -framework Foundation",
-        # )
         # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
-        sign = "project(GmSSL)"
-        append_pos = text.find(sign) + len(sign)
-        new_text = "".join(
-            [
-                text[:append_pos],
-                "\n\n{}\n\n".format(append_text),
-                text[append_pos:],
-            ]
+        append_text = "add_compile_options(-fPIC)"
+        text = text.replace(
+            "project(GmSSL)",
+            "project(GmSSL)\n\n{}\n\n".format(append_text),
         )
         with open(cmake_filename, "w") as f:
-            f.write(new_text)
-        # macos Symbol not found: _kSecRandomDefault
-        # with open("src/rand_apple.c", "r") as f:
-        #     text = f.read()
-        # text = text.replace(
-        #     "#include <Security/Security.h>",
-        #     "#include <Security/SecRandom.h>\n#include <Security/Security.h>",
-        # )
-        # with open('src/rand_apple.c', 'w') as f:
-        #     f.write(text)
+            f.write(text)
 
     # 3.编译静态库
     if os.path.exists("build"):
@@ -91,13 +69,21 @@ class CompileGmSSLLibrary(build_ext):
         super().run()
 
 
-extension = Extension(
-    "gmssl_pyx.gmsslext",
-    ["gmssl_pyx/gmsslmodule.c"],
-    include_dirs=["./GmSSL-3.1.0/include"],
-    library_dirs=["./GmSSL-3.1.0/build/bin"],
-    libraries=["gmssl"],
-)
+def create_extension():
+    extra_link_args = []
+    if sys.platform.startswith("darwin"):
+        # macos Symbol not found: _kSecRandomDefault
+        extra_link_args = ["-framework", "Security"]
+    extension = Extension(
+        "gmssl_pyx.gmsslext",
+        ["gmssl_pyx/gmsslmodule.c"],
+        include_dirs=["./GmSSL-3.1.0/include"],
+        library_dirs=["./GmSSL-3.1.0/build/bin"],
+        libraries=["gmssl"],
+        extra_link_args=extra_link_args,
+    )
+    return extension
+
 
 setup(
     name="gmssl_pyx",
@@ -117,6 +103,6 @@ setup(
     packages=[
         "gmssl_pyx",
     ],
-    ext_modules=[extension],
+    ext_modules=[create_extension()],
     cmdclass={"build_ext": CompileGmSSLLibrary},
 )
