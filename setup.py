@@ -34,28 +34,29 @@ def compile_gmssl():
     # 1.下载源码并解压
     download_source_code()
 
-    # 2. 修改 CMakeLists.txt ，直接编译会报错
-    # /usr/bin/ld: ./GmSSL-3.1.0/build/bin/libgmssl.a(sm2_key.c.o): relocation R_X86_64_PC32 against symbol `stderr@@GLIBC_2.2.5' can not be used when making a shared object; recompile with -fPIC
-    cmake_filename = "GmSSL-3.1.0/CMakeLists.txt"
-    append_text = "add_compile_options(-fPIC)"
-    with open(cmake_filename, "r") as f:
-        text = f.read()
-        # rand_unix.需要使用 getentropy
-        # getentropy 在老版本的Linux发行版和glibc中不存在
-        text = text.replace('rand_unix.c', 'rand.c')
-    if append_text not in text:
-        # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
-        sign = "project(GmSSL)"
-        append_pos = text.find(sign) + len(sign)
-        new_text = "".join(
-            [
-                text[:append_pos],
-                "\n\n{}\n\n".format(append_text),
-                text[append_pos:],
-            ]
-        )
-        with open("GmSSL-3.1.0/CMakeLists.txt", "w") as f:
-            f.write(new_text)
+    if not is_windows:
+        # 2. 修改 CMakeLists.txt ，直接编译会报错
+        # /usr/bin/ld: ./GmSSL-3.1.0/build/bin/libgmssl.a(sm2_key.c.o): relocation R_X86_64_PC32 against symbol `stderr@@GLIBC_2.2.5' can not be used when making a shared object; recompile with -fPIC
+        cmake_filename = "GmSSL-3.1.0/CMakeLists.txt"
+        append_text = "add_compile_options(-fPIC)"
+        with open(cmake_filename, "r") as f:
+            text = f.read()
+            # rand_unix.需要使用 getentropy
+            # getentropy 在老版本的Linux发行版和glibc中不存在
+            text = text.replace('rand_unix.c', 'rand.c')
+        if append_text not in text:
+            # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
+            sign = "project(GmSSL)"
+            append_pos = text.find(sign) + len(sign)
+            new_text = "".join(
+                [
+                    text[:append_pos],
+                    "\n\n{}\n\n".format(append_text),
+                    text[append_pos:],
+                ]
+            )
+            with open("GmSSL-3.1.0/CMakeLists.txt", "w") as f:
+                f.write(new_text)
 
     # 3.编译静态库
     build_dir = "GmSSL-3.1.0/build"
@@ -64,9 +65,8 @@ def compile_gmssl():
         shutil.rmtree(build_dir)
     os.makedirs(build_dir, exist_ok=True)
     os.chdir(build_dir)
-    subprocess.check_call("cmake .. -DBUILD_SHARED_LIBS=OFF", shell=True)
-    # 编译好的静态库位于 GmSSL-3.1.0/build/bin/libgmssl.a
-    subprocess.check_call("cmake --build .", shell=True)
+    subprocess.check_call("cmake -B build -DBUILD_SHARED_LIBS=OFF", shell=True)
+    subprocess.check_call("cmake --build build", shell=True)
 
     # 切换回之前的目录
     os.chdir(cwd)
