@@ -59,12 +59,10 @@ def compile_gmssl():
                 f.write(new_text)
 
     # 3.编译静态库
-    build_dir = "GmSSL-3.1.0/build"
-    if os.path.exists(build_dir):
+    os.chdir("GmSSL-3.1.0")
+    if os.path.exists('build'):
         # 删除之前的构建，重新生成
-        shutil.rmtree(build_dir)
-    os.makedirs(build_dir, exist_ok=True)
-    # os.chdir(build_dir)
+        shutil.rmtree('build')
     subprocess.check_call("cmake -B build -DBUILD_SHARED_LIBS=OFF", shell=True)
     subprocess.check_call("cmake --build build", shell=True)
 
