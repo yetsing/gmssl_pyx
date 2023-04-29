@@ -64,7 +64,7 @@ def compile_gmssl():
         # 删除之前的构建，重新生成
         shutil.rmtree(build_dir)
     os.makedirs(build_dir, exist_ok=True)
-    os.chdir(build_dir)
+    # os.chdir(build_dir)
     subprocess.check_call("cmake -B build -DBUILD_SHARED_LIBS=OFF", shell=True)
     subprocess.check_call("cmake --build build", shell=True)
 
