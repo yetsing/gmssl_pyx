@@ -7,7 +7,7 @@ import subprocess
 import tarfile
 
 from setuptools.command.build_ext import build_ext
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension
 
 
 is_windows = sys.platform.startswith("win32")
@@ -103,7 +103,10 @@ setup(
     ],
     python_requires=">=3.7",
     keywords="gmssl",
-    packages=find_packages('gmssl_pyx'),
+    packages=[
+        'gmssl_pyx',
+        'gmssl_pyx.gmsslext',
+    ],
     ext_modules=[extension],
     cmdclass={"build_ext": CompileGmSSLLibrary},
 )
