@@ -66,10 +66,7 @@ def compile_gmssl():
     os.chdir(build_dir)
     subprocess.check_call("cmake .. -DBUILD_SHARED_LIBS=OFF", shell=True)
     # 编译好的静态库位于 GmSSL-3.1.0/build/bin/libgmssl.a
-    if is_windows:
-        subprocess.check_call("nmake && nmake test", shell=True)
-    else:
-        subprocess.check_call("make && make test", shell=True)
+    subprocess.check_call("cmake --build .")
 
     # 切换回之前的目录
     os.chdir(cwd)

@@ -48,6 +48,40 @@ jobs:
 #        with:
 #          path: ./wheelhouse/*.whl
 
+#  build_win_wheels:
+#    name: Build wheel for cp37-win_amd64
+#    runs-on: ${{ matrix.os }}
+#    strategy:
+#      matrix:
+#        include:
+#          # Window 64 bit
+#          # Note: windows-2019 is needed for older Python versions:
+#          - os: windows-2019
+#            python: 37
+#            platform_id: win_amd64
+#
+#    steps:
+#      - uses: actions/checkout@v3
+#
+#      - uses: ilammy/msvc-dev-cmd@v1
+#        with:
+#          arch: amd64
+#
+#      - name: Configure CMake
+#        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+#        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+#        run: cmake -B ${{github.workspace}}/build -DBUILD_SHARED_LIBS=OFF
+#
+#      - name: Build
+#        # Build your program with the given configuration
+#        run: cmake --build ${{github.workspace}}/build
+#
+#      - name: Build and test wheels
+#        uses: pypa/cibuildwheel@v2.12.3
+#        env:
+#          CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+#          CIBW_TEST_COMMAND: python -m unittest discover {project}/tests
+
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-20.04
