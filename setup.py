@@ -50,6 +50,16 @@ def compile_gmssl():
         with open(cmake_filename, "w") as f:
             f.write(text)
 
+    elif sys.platform.startswith("win"):
+        # 修改 sm2.h 内容，直接用会报语法错误
+        filename = "include/gmssl/sm2.h"
+        with open(filename, "r", encoding="utf-8") as f:
+            text = f.read()
+        text = text.replace("#include <gmssl/api.h>", "")
+        text = text.replace("_gmssl_export", "__declspec(dllexport)")
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(text)
+
     # 3.编译静态库
     if os.path.exists("build"):
         # 删除之前的构建，重新生成
