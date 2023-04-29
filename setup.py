@@ -44,7 +44,11 @@ def compile_gmssl():
             text = f.read()
             # rand_unix.需要使用 getentropy
             # getentropy 在老版本的Linux发行版和glibc中不存在
-        text = text.replace('rand_unix.c', 'rand.c')
+        text = text.replace("rand_unix.c", "rand.c")
+        text = text.replace(
+            "-framework Security",
+            "-framework Security -framework Foundation",
+        )
         # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
         sign = "project(GmSSL)"
         append_pos = text.find(sign) + len(sign)
@@ -61,14 +65,14 @@ def compile_gmssl():
         with open("src/rand_apple.c", "r") as f:
             text = f.read()
         text = text.replace(
-            '#include <Security/Security.h>',
-            '#include <Security/SecRandom.h>\n#include <Security/Security.h>',
+            "#include <Security/Security.h>",
+            "#include <Security/SecRandom.h>\n#include <Security/Security.h>",
         )
 
     # 3.编译静态库
-    if os.path.exists('build'):
+    if os.path.exists("build"):
         # 删除之前的构建，重新生成
-        shutil.rmtree('build')
+        shutil.rmtree("build")
     subprocess.check_call("cmake -B build -DBUILD_SHARED_LIBS=OFF", shell=True)
     subprocess.check_call("cmake --build build", shell=True)
 
@@ -108,7 +112,7 @@ setup(
     python_requires=">=3.7",
     keywords="gmssl",
     packages=[
-        'gmssl_pyx',
+        "gmssl_pyx",
     ],
     ext_modules=[extension],
     cmdclass={"build_ext": CompileGmSSLLibrary},
