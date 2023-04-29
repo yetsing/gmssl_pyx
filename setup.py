@@ -81,14 +81,17 @@ class CompileGmSSLLibrary(build_ext):
 
 def create_extension():
     extra_link_args = []
+    library_dirs = ["./GmSSL-3.1.0/build/bin"]
     if sys.platform.startswith("darwin"):
         # macos Symbol not found: _kSecRandomDefault
         extra_link_args = ["-framework", "Security"]
+    elif sys.platform.startswith("win"):
+        library_dirs = ["./GmSSL-3.1.0/build/bin/Debug"]
     extension = Extension(
         "gmssl_pyx.gmsslext",
         ["gmssl_pyx/gmsslmodule.c"],
         include_dirs=["./GmSSL-3.1.0/include"],
-        library_dirs=["./GmSSL-3.1.0/build/bin/Debug"],
+        library_dirs=library_dirs,
         libraries=["gmssl"],
         extra_link_args=extra_link_args,
     )
