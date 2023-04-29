@@ -81,7 +81,7 @@ class CompileGmSSLLibrary(build_ext):
 
 
 extension = Extension(
-    "gmsslext",
+    "gmssl_pyx.gmsslext",
     ["gmssl_pyx/gmsslmodule.c"],
     include_dirs=["./GmSSL-3.1.0/include"],
     library_dirs=["./GmSSL-3.1.0/build/bin"],
@@ -105,7 +105,6 @@ setup(
     keywords="gmssl",
     packages=[
         'gmssl_pyx',
-        'gmssl_pyx.gmsslext',
     ],
     ext_modules=[extension],
     cmdclass={"build_ext": CompileGmSSLLibrary},
