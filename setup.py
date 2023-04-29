@@ -15,7 +15,7 @@ is_windows = sys.platform.startswith("win32")
 
 def download_source_code():
     if os.path.exists("GmSSL-3.1.0"):
-        return
+        shutil.rmtree("GmSSL-3.1.0")
     source_path = "gmssl.tar.gz"
     if not os.path.exists(source_path):
         source_url = "https://github.com/guanzhi/GmSSL/archive/refs/tags/v3.1.0.tar.gz"
@@ -43,20 +43,21 @@ def compile_gmssl():
             text = f.read()
             # rand_unix.需要使用 getentropy
             # getentropy 在老版本的Linux发行版和glibc中不存在
-            text = text.replace('rand_unix.c', 'rand.c')
-        if append_text not in text:
-            # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
-            sign = "project(GmSSL)"
-            append_pos = text.find(sign) + len(sign)
-            new_text = "".join(
-                [
-                    text[:append_pos],
-                    "\n\n{}\n\n".format(append_text),
-                    text[append_pos:],
-                ]
-            )
-            with open("GmSSL-3.1.0/CMakeLists.txt", "w") as f:
-                f.write(new_text)
+        text = text.replace('rand_unix.c', 'rand.c')
+        # macos Symbol not found: _kSecRandomDefault
+        text = text.repalce('-framework Security', '-framework Security -framework Foundation')
+        # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
+        sign = "project(GmSSL)"
+        append_pos = text.find(sign) + len(sign)
+        new_text = "".join(
+            [
+                text[:append_pos],
+                "\n\n{}\n\n".format(append_text),
+                text[append_pos:],
+            ]
+        )
+        with open("GmSSL-3.1.0/CMakeLists.txt", "w") as f:
+            f.write(new_text)
 
     # 3.编译静态库
     os.chdir("GmSSL-3.1.0")
