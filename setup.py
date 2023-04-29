@@ -88,7 +88,7 @@ def create_extension():
         "gmssl_pyx.gmsslext",
         ["gmssl_pyx/gmsslmodule.c"],
         include_dirs=["./GmSSL-3.1.0/include"],
-        library_dirs=["./GmSSL-3.1.0/build/bin"],
+        library_dirs=["./GmSSL-3.1.0/build/bin/Debug"],
         libraries=["gmssl"],
         extra_link_args=extra_link_args,
     )
