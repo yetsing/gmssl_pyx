@@ -11,6 +11,7 @@ from setuptools.command.build_ext import build_ext
 from setuptools import setup, Extension
 
 
+# 需要给所有文件读写操作都指定编码，避免 windows gbk 编码错误
 utf8 = "utf-8"
 script_directory = pathlib.Path(__file__).resolve().parent
 is_windows = sys.platform.startswith("win32")
@@ -47,10 +48,10 @@ def compile_gmssl():
         # 2. 修改 CMakeLists.txt ，直接编译会报错
         # /usr/bin/ld: ./GmSSL-3.1.0/build/bin/libgmssl.a(sm2_key.c.o): relocation R_X86_64_PC32 against symbol `stderr@@GLIBC_2.2.5' can not be used when making a shared object; recompile with -fPIC
         cmake_filename = "CMakeLists.txt"
-        with open(cmake_filename, "r") as f:
+        with open(cmake_filename, "r", encoding=utf8) as f:
             text = f.read()
-            # rand_unix.需要使用 getentropy
-            # getentropy 在老版本的Linux发行版和glibc中不存在
+        # rand_unix.需要使用 getentropy
+        # getentropy 在老版本的Linux发行版和 glibc 中不存在
         text = text.replace("rand_unix.c", "rand.c")
         # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
         append_text = "add_compile_options(-fPIC)"
@@ -58,11 +59,12 @@ def compile_gmssl():
             "project(GmSSL)",
             "project(GmSSL)\n\n{}\n\n".format(append_text),
         )
-        with open(cmake_filename, "w") as f:
+        with open(cmake_filename, "w", encoding=utf8) as f:
             f.write(text)
 
     elif sys.platform.startswith("win"):
-        # 修改 sm2.h 内容，直接用会报语法错误
+        # 修改 sm2.h 内容，直接用 windows 编译会报语法错误
+        # 具体原因不清楚，不想深究了
         filename = "include/gmssl/sm2.h"
         with open(filename, "r", encoding=utf8) as f:
             text = f.read()
@@ -75,6 +77,8 @@ def compile_gmssl():
     if os.path.exists("build"):
         # 删除之前的构建，重新生成
         shutil.rmtree("build")
+    # 这两条编译命令来自 GmSSLL 的 github action 配置，文件链接如下
+    # https://github.com/guanzhi/GmSSL/blob/v3.1.0/.github/workflows/cmake.yml
     subprocess.check_call("cmake -B build -DBUILD_SHARED_LIBS=OFF", shell=True)
     subprocess.check_call("cmake --build build", shell=True)
 
@@ -96,8 +100,10 @@ def create_extension():
     libraries = ["gmssl"]
     if sys.platform.startswith("darwin"):
         # macos Symbol not found: _kSecRandomDefault
+        # 对应 GmSSL-3.1.0/src/rand_apple.c
         extra_link_args = ["-framework", "Security"]
     elif sys.platform.startswith("win"):
+        # windows security random, 对应 GmSSL-3.1.0/src/rand_win.c
         library_dirs = ["./GmSSL-3.1.0/build/bin/Debug"]
         libraries.append("Advapi32")
     extension = Extension(
