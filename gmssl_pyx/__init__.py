@@ -5,6 +5,8 @@ from gmssl_pyx.gmsslext import (
     GmsslInnerError,
     InvalidKeyError,
 )
-
-version = ("0", "0", "2")
-__version__ = ".".join(version)
+from gmssl_pyx._version import (
+    version_info,
+    version,
+    __version__,
+)

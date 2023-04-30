@@ -11,9 +11,17 @@ from setuptools.command.build_ext import build_ext
 from setuptools import setup, Extension
 
 
+utf8 = "utf-8"
 script_directory = pathlib.Path(__file__).resolve().parent
 is_windows = sys.platform.startswith("win32")
-long_description = script_directory.joinpath("README.md").read_text()
+long_description = script_directory.joinpath("README.md").read_text(encoding=utf8)
+
+
+def get_version() -> str:
+    version_filepath = script_directory.joinpath("gmssl_pyx", "_version.py")
+    version_dict = {}
+    exec(version_filepath.read_text(encoding=utf8), {}, version_dict)
+    return version_dict["__version__"]
 
 
 def download_source_code():
@@ -56,11 +64,11 @@ def compile_gmssl():
     elif sys.platform.startswith("win"):
         # 修改 sm2.h 内容，直接用会报语法错误
         filename = "include/gmssl/sm2.h"
-        with open(filename, "r", encoding="utf-8") as f:
+        with open(filename, "r", encoding=utf8) as f:
             text = f.read()
         text = text.replace("#include <gmssl/api.h>", "")
         text = text.replace("_gmssl_export", "__declspec(dllexport)")
-        with open(filename, "w", encoding="utf-8") as f:
+        with open(filename, "w", encoding=utf8) as f:
             f.write(text)
 
     # 3.编译静态库
@@ -108,7 +116,7 @@ setup(
     description="python wrapper of GmSSL",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="0.0.2",
+    version=get_version(),
     url="https://github.com/yetsing/gmssl_pyx",
     author="yeqing",
     license="Apache Software License",
