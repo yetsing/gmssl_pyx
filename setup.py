@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import pathlib
 import sys
 import urllib.request
 import shutil
@@ -10,7 +11,9 @@ from setuptools.command.build_ext import build_ext
 from setuptools import setup, Extension
 
 
+script_directory = pathlib.Path(__file__).resolve().parent
 is_windows = sys.platform.startswith("win32")
+long_description = script_directory.joinpath("README.md").read_text()
 
 
 def download_source_code():
@@ -103,6 +106,8 @@ def create_extension():
 setup(
     name="gmssl_pyx",
     description="python wrapper of GmSSL",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     version="0.0.1",
     url="https://github.com/yetsing/gmssl_pyx",
     author="yeqing",
