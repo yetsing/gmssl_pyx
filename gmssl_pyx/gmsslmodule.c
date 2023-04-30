@@ -16,14 +16,20 @@ static PyObject *InvalidKeyError;
 static PyObject *
 gmsslext_sm2_key_generate(PyObject *self, PyObject *args) {
     SM2_KEY sm2_key;
-    int ret;
+    int ret, ok;
 
+    // 函数没有参数
+    ok = PyArg_ParseTuple(args, "");
+    if (!ok){
+        return NULL;
+    }
     ret = sm2_key_generate(&sm2_key);
-    if ( ret != GMSSL_INNER_OK) {
+    if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error");
         return NULL;
     }
-    return Py_BuildValue("y#y#", &sm2_key.public_key, 64, &sm2_key.private_key, 32);
+    // 整数字面量不是 Py_ssize_t 类型，需要强制转换，不然 Windows 会报错 MemoryError
+    return Py_BuildValue("y#y#", &sm2_key.public_key, (Py_ssize_t) 64, &sm2_key.private_key, (Py_ssize_t) 32);
 }
 
 static PyObject *
@@ -48,12 +54,12 @@ gmsslext_sm2_encrypt(PyObject *self, PyObject *args) {
         PyErr_SetString(GmsslInnerError, "plaintext length not support");
         return NULL;
     }
-    ret = sm2_key_set_public_key(&sm2_key, public_key);
+    ret = sm2_key_set_public_key(&sm2_key, (SM2_POINT *) public_key);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(InvalidKeyError, "invalid public key");
         return NULL;
     }
-    ret = sm2_encrypt(&sm2_key, plaintext, text_length, ciphertext, &outlen);
+    ret = sm2_encrypt(&sm2_key, (uint8_t *) plaintext, text_length, ciphertext, (size_t *) &outlen);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error of sm2_encrypt");
         return NULL;
@@ -83,12 +89,12 @@ gmsslext_sm2_decrypt(PyObject *self, PyObject *args) {
         PyErr_SetString(GmsslInnerError, "ciphertext length not support");
         return NULL;
     }
-    ret = sm2_key_set_private_key(&sm2_key, private_key);
+    ret = sm2_key_set_private_key(&sm2_key, (uint8_t *) private_key);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(InvalidKeyError, "invalid private key");
         return NULL;
     }
-    ret = sm2_decrypt(&sm2_key, ciphertext, text_length, plaintext, &outlen);
+    ret = sm2_decrypt(&sm2_key, (uint8_t *) ciphertext, text_length, plaintext, (size_t *) &outlen);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error of sm2_decrypt");
         return NULL;
@@ -113,13 +119,13 @@ spam_system(PyObject *self, PyObject *args) {
 
 // 定义模块暴露的函数
 static PyMethodDef SpamMethods[] = {
-        {"system", spam_system, METH_VARARGS,
+        {"system",           spam_system,               METH_VARARGS,
                 "Execute a shell command."},
         {"sm2_key_generate", gmsslext_sm2_key_generate, METH_VARARGS,
                 "生成 SM2 公私密钥对"},
-        {"sm2_encrypt", gmsslext_sm2_encrypt, METH_VARARGS,
+        {"sm2_encrypt",      gmsslext_sm2_encrypt,      METH_VARARGS,
                 "使用 SM2 公钥加密"},
-        {"sm2_decrypt", gmsslext_sm2_decrypt, METH_VARARGS,
+        {"sm2_decrypt",      gmsslext_sm2_decrypt,      METH_VARARGS,
                 "使用 SM2 私钥解密"},
         {NULL, NULL, 0, NULL}        /* Sentinel */
 };

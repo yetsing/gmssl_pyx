@@ -108,7 +108,7 @@ setup(
     description="python wrapper of GmSSL",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="0.0.1",
+    version="0.0.2",
     url="https://github.com/yetsing/gmssl_pyx",
     author="yeqing",
     license="Apache Software License",
