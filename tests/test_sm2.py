@@ -18,7 +18,8 @@ from gmssl_pyx import (
 class SM2TestCase(unittest.TestCase):
     def test_sm2_encrypt_and_decrypt(self):
         public_key, private_key = sm2_key_generate()
-        plaintext = secrets.token_bytes(16)
+        n = random.randint(1, 255)
+        plaintext = secrets.token_bytes(n)
         # args 传参
         ciphertext = sm2_encrypt(public_key, plaintext)
         decrypted = sm2_decrypt(private_key, ciphertext)
