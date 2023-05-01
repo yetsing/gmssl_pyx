@@ -5,8 +5,7 @@ from gmssl_pyx.gmsslext import (
     sm2_sign_sm3_digest,
     sm2_verify_sm3_digest,
     GmsslInnerError,
-    InvalidKeyError,
-    InvalidArgumentError,
+    InvalidValueError,
 )
 from gmssl_pyx._version import (
     version_info,

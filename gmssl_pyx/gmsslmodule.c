@@ -11,9 +11,7 @@
 
 static PyObject *GmsslInnerError;
 
-static PyObject *InvalidKeyError;
-
-static PyObject *InvalidArgumentError;
+static PyObject *InvalidValueError;
 
 static PyObject *
 gmsslext_sm2_key_generate(PyObject *self, PyObject *args) {
@@ -49,7 +47,7 @@ gmsslext_sm2_encrypt(PyObject *self, PyObject *args) {
         return NULL;
     }
     if (key_length != 64) {
-        PyErr_SetString(InvalidKeyError, "invalid public key length");
+        PyErr_SetString(InvalidValueError, "invalid public key length");
         return NULL;
     }
     if (text_length < SM2_MIN_PLAINTEXT_SIZE || text_length > SM2_MAX_PLAINTEXT_SIZE) {
@@ -58,7 +56,7 @@ gmsslext_sm2_encrypt(PyObject *self, PyObject *args) {
     }
     ret = sm2_key_set_public_key(&sm2_key, (SM2_POINT *) public_key);
     if (ret != GMSSL_INNER_OK) {
-        PyErr_SetString(InvalidKeyError, "invalid public key");
+        PyErr_SetString(InvalidValueError, "invalid public key");
         return NULL;
     }
     ret = sm2_encrypt(&sm2_key, (uint8_t *) plaintext, text_length, ciphertext, (size_t *) &outlen);
@@ -84,7 +82,7 @@ gmsslext_sm2_decrypt(PyObject *self, PyObject *args) {
         return NULL;
     }
     if (key_length != 32) {
-        PyErr_SetString(InvalidKeyError, "invalid private key length");
+        PyErr_SetString(InvalidValueError, "invalid private key length");
         return NULL;
     }
     if (text_length < SM2_MIN_CIPHERTEXT_SIZE || text_length > SM2_MAX_CIPHERTEXT_SIZE) {
@@ -93,7 +91,7 @@ gmsslext_sm2_decrypt(PyObject *self, PyObject *args) {
     }
     ret = sm2_key_set_private_key(&sm2_key, (uint8_t *) private_key);
     if (ret != GMSSL_INNER_OK) {
-        PyErr_SetString(InvalidKeyError, "invalid private key");
+        PyErr_SetString(InvalidValueError, "invalid private key");
         return NULL;
     }
     ret = sm2_decrypt(&sm2_key, (uint8_t *) ciphertext, text_length, plaintext, (size_t *) &outlen);
@@ -119,16 +117,16 @@ gmsslext_sm2_sign_sm3_digest(PyObject *self, PyObject *args) {
         return NULL;
     }
     if (key_length != 32) {
-        PyErr_SetString(InvalidKeyError, "invalid private key length");
+        PyErr_SetString(InvalidValueError, "invalid private key length");
         return NULL;
     }
     if (digest_length != SM3_DIGEST_SIZE) {
-        PyErr_SetString(InvalidArgumentError, "expected 32bytes sm3 digest");
+        PyErr_SetString(InvalidValueError, "expected 32bytes sm3 digest");
         return NULL;
     }
     ret = sm2_key_set_private_key(&sm2_key, (uint8_t *) private_key);
     if (ret != GMSSL_INNER_OK) {
-        PyErr_SetString(InvalidKeyError, "invalid private key");
+        PyErr_SetString(InvalidValueError, "invalid private key");
         return NULL;
     }
     ret = sm2_sign(&sm2_key, digest, sig, &siglen);
@@ -154,16 +152,16 @@ gmsslext_sm2_verify_sm3_digest(PyObject *self, PyObject *args) {
         return NULL;
     }
     if (key_length != 64) {
-        PyErr_SetString(InvalidKeyError, "invalid public key length");
+        PyErr_SetString(InvalidValueError, "invalid public key length");
         return NULL;
     }
     if (digest_length != SM3_DIGEST_SIZE) {
-        PyErr_SetString(InvalidArgumentError, "invalid sm3 digest");
+        PyErr_SetString(InvalidValueError, "invalid sm3 digest");
         return NULL;
     }
     ret = sm2_key_set_public_key(&sm2_key, (SM2_POINT *) public_key);
     if (ret != GMSSL_INNER_OK) {
-        PyErr_SetString(InvalidKeyError, "invalid public key");
+        PyErr_SetString(InvalidValueError, "invalid public key");
         return NULL;
     }
     ret = sm2_verify(&sm2_key, digest, sig, siglen);
@@ -191,18 +189,18 @@ spam_system(PyObject *self, PyObject *args) {
 
 // 定义模块暴露的函数
 static PyMethodDef SpamMethods[] = {
-        {"system", spam_system, METH_VARARGS,
-         "Execute a shell command."},
-        {"sm2_key_generate", gmsslext_sm2_key_generate, METH_VARARGS,
-         "生成 SM2 公私密钥对"},
-        {"sm2_encrypt", gmsslext_sm2_encrypt, METH_VARARGS,
-         "使用 SM2 公钥加密"},
-        {"sm2_decrypt", gmsslext_sm2_decrypt, METH_VARARGS,
-         "使用 SM2 私钥解密"},
-        {"sm2_sign_sm3_digest", gmsslext_sm2_sign_sm3_digest, METH_VARARGS,
-         "使用 SM2 签名 SM3 摘要"},
+        {"system",                spam_system,                    METH_VARARGS,
+                "Execute a shell command."},
+        {"sm2_key_generate",      gmsslext_sm2_key_generate,      METH_VARARGS,
+                "生成 SM2 公私密钥对"},
+        {"sm2_encrypt",           gmsslext_sm2_encrypt,           METH_VARARGS,
+                "使用 SM2 公钥加密"},
+        {"sm2_decrypt",           gmsslext_sm2_decrypt,           METH_VARARGS,
+                "使用 SM2 私钥解密"},
+        {"sm2_sign_sm3_digest",   gmsslext_sm2_sign_sm3_digest,   METH_VARARGS,
+                "使用 SM2 签名 SM3 摘要"},
         {"sm2_verify_sm3_digest", gmsslext_sm2_verify_sm3_digest, METH_VARARGS,
-         "使用 SM2 验证 SM3 摘要和签名"},
+                "使用 SM2 验证 SM3 摘要和签名"},
         {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
@@ -237,25 +235,12 @@ PyInit_gmsslext(void) {
         Py_DECREF(m);
         return NULL;
     }
-    // 新建异常 gmssl.InvalidKeyError ，父类为 GmsslInnerError
-    InvalidKeyError = PyErr_NewException("gmsslext.InvalidKeyError", GmsslInnerError, NULL);
-    Py_XINCREF(InvalidKeyError);
-    if (PyModule_AddObject(m, "InvalidKeyError", InvalidKeyError) < 0) {
-        Py_XDECREF(InvalidKeyError);
-        Py_CLEAR(InvalidKeyError);
-        Py_XDECREF(GmsslInnerError);
-        Py_CLEAR(GmsslInnerError);
-        Py_DECREF(m);
-        return NULL;
-    }
-    // 新建异常 gmssl.InvalidArgumentError ，父类为 GmsslInnerError
-    InvalidArgumentError = PyErr_NewException("gmsslext.InvalidArgumentError", GmsslInnerError, NULL);
-    Py_XINCREF(InvalidArgumentError);
-    if (PyModule_AddObject(m, "InvalidArgumentError", InvalidArgumentError) < 0) {
-        Py_XDECREF(InvalidArgumentError);
-        Py_CLEAR(InvalidArgumentError);
-        Py_XDECREF(InvalidKeyError);
-        Py_CLEAR(InvalidKeyError);
+    // 新建异常 gmssl.InvalidValueError ，父类为 GmsslInnerError
+    InvalidValueError = PyErr_NewException("gmsslext.InvalidValueError", GmsslInnerError, NULL);
+    Py_XINCREF(InvalidValueError);
+    if (PyModule_AddObject(m, "InvalidValueError", InvalidValueError) < 0) {
+        Py_XDECREF(InvalidValueError);
+        Py_CLEAR(InvalidValueError);
         Py_XDECREF(GmsslInnerError);
         Py_CLEAR(GmsslInnerError);
         Py_DECREF(m);

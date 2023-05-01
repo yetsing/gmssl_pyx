@@ -3,11 +3,8 @@ import typing as t
 class GmsslInnerError(Exception):
     """libgmssl 库内部错误"""
 
-class InvalidKeyError(GmsslInnerError):
-    """无效的密钥"""
-
-class InvalidArgumentError(GmsslInnerError):
-    """无效的参数"""
+class InvalidValueError(GmsslInnerError):
+    """无效值"""
 
 def sm2_key_generate() -> t.Tuple[bytes, bytes]:
     """生成 SM2 公私密钥对，公钥 64 字节，私钥 32 字节
