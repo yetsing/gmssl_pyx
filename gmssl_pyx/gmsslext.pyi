@@ -57,3 +57,43 @@ def sm2_verify_sm3_digest(public_key: bytes, digest: bytes, signature: bytes) ->
     Returns: 验证结果
     """
     ...
+
+def sm2_sign(
+    private_key: bytes,
+    public_key: bytes,
+    message: bytes,
+    signer_id: t.Optional[bytes] = b"1234567812345678",
+) -> bytes:
+    """使用 SM2 签名消息数据
+
+    Args:
+        private_key: 32 字节的私钥
+        public_key: 64 字节的公钥
+        message: 消息数据
+        signer_id: 签名者标识（一般情况下用默认值即可）；
+            如果传 None ，签名不包括 SM3 杂凑值 z ，否则包括 SM3 杂凑值 z
+
+    Returns: 签名数据，编码格式为 ASN.1 DER ，模式为 rs
+    """
+    ...
+
+def sm2_verify(
+    private_key: bytes,
+    public_key: bytes,
+    message: bytes,
+    signature: bytes,
+    signer_id: t.Optional[bytes] = b"1234567812345678",
+) -> bool:
+    """使用 SM2 验证消息数据的签名，包含 SM3 杂凑值 z
+
+    Args:
+        private_key: 32 字节的私钥
+        public_key: 64 字节的公钥
+        message: 消息数据
+        signature: 签名数据，编码格式为 ASN.1 DER ，模式为 rs
+        signer_id: 签名者标识（一般情况下用默认值即可），签名的时候传了啥，这里就传啥；
+            如果传 None ，签名不包括 SM3 杂凑值 z ，否则包括 SM3 杂凑值 z
+
+    Returns: 验证结果
+    """
+    ...
