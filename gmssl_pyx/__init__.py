@@ -7,12 +7,17 @@ from gmssl_pyx.gmsslext import (
     sm2_verify_sm3_digest,
     sm2_sign,
     sm2_verify,
+    # SM3
+    sm3_hash,
     # exception
     GmsslInnerError,
     InvalidValueError,
 )
+from gmssl_pyx.sm2_utils import normalize_sm2_public_key
 from gmssl_pyx._version import (
     version_info,
     version,
     __version__,
 )
+
+SM2_DEFAULT_SIGNER_ID = b"1234567812345678"
