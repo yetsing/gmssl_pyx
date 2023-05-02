@@ -97,3 +97,35 @@ def sm2_verify(
     Returns: 验证结果
     """
     ...
+
+def sm3_hash(message: bytes) -> bytes:
+    """SM3 hash 运算
+
+    Args:
+        message: 消息数据
+
+    Returns: hash 数据
+    """
+    ...
+
+def sm3_hmac(key: bytes, message: bytes) -> bytes:
+    """SM3 hmac 运算
+
+    Args:
+        key: 密钥
+        message: 消息数据
+
+    Returns: hmac 运算后的数据
+    """
+    ...
+
+def sm3_kdf(key: bytes, outlen: int) -> bytes:
+    """SM3 kdf 密钥派生
+
+    Args:
+        key: 密钥
+        outlen: 输出数据大小
+
+    Returns: 输出数据
+    """
+    ...

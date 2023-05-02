@@ -162,3 +162,43 @@ else:
 k1 = normalize_sm2_public_key(compressed_public_key)
 assert k1 == raw_public_key
 ```
+
+## SM3
+
+### hash 计算
+
+```python
+from gmssl_pyx import sm3_hash
+
+
+message = b'hello world'
+signature = sm3_hash(message)
+print('message', message)
+print('signature', signature.hex())
+```
+
+### hmac 计算
+
+```python
+import secrets
+from gmssl_pyx import sm3_hmac
+
+
+key = secrets.token_bytes(32)
+message = b"sm3_hmac"
+hmac_data = sm3_hmac(key, message)
+print("message", message)
+print("hmac_data", hmac_data)
+```
+
+### kdf 计算
+
+```python
+import secrets
+from gmssl_pyx import sm3_kdf
+
+
+key = secrets.token_bytes(32)
+new_key = sm3_kdf(key, 32)
+print('kdf new_key', new_key)
+```

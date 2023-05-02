@@ -8,4 +8,4 @@ fi
 
 set -ex
 
-python -m unittest discover tests
+python -m unittest discover -v tests

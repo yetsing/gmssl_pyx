@@ -9,6 +9,8 @@ from gmssl_pyx.gmsslext import (
     sm2_verify,
     # SM3
     sm3_hash,
+    sm3_hmac,
+    sm3_kdf,
     # exception
     GmsslInnerError,
     InvalidValueError,

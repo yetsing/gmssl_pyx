@@ -189,8 +189,8 @@ gmsslext_sm2_sign(PyObject *self, PyObject *args, PyObject *keywds) {
     const char *message;
     Py_ssize_t message_length;
     PyObject *signer_id_obj = NULL;
-    static char *kwlist[] = {"private_key", "public_key", "message", "signer_id", NULL};
     int ret, ok;
+    static char *kwlist[] = {"private_key", "public_key", "message", "signer_id", NULL};
 
     // sm2_sign(private_key: bytes, public_key: bytes, message: bytes, signer_id: t.Optional[bytes] = b'1234567812345678') -> bytes:
     ok = PyArg_ParseTupleAndKeywords(
@@ -337,6 +337,81 @@ gmsslext_sm2_verify(PyObject *self, PyObject *args, PyObject *keywds) {
 }
 
 static PyObject *
+gmsslext_sm3_hash(PyObject *self, PyObject *args, PyObject *keywds) {
+    const char *message;
+    Py_ssize_t message_length;
+    int ok;
+
+    static char *kwlist[] = {"message", NULL};
+    // sm3_hash(message: bytes) -> bytes
+    ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#", kwlist, &message, &message_length);
+    if (!ok) {
+        return NULL;
+    }
+    SM3_CTX sm3_ctx;
+    uint8_t digest[32];
+    sm3_init(&sm3_ctx);
+    sm3_update(&sm3_ctx, (uint8_t *) message, message_length);
+    sm3_finish(&sm3_ctx, digest);
+    return Py_BuildValue("y#", digest, (Py_ssize_t) 32);
+}
+
+static PyObject *
+gmsslext_sm3_hmac(PyObject *self, PyObject *args, PyObject *keywds) {
+    const char *message;
+    Py_ssize_t message_length;
+    const char *key;
+    Py_ssize_t key_length;
+    int ok;
+
+    static char *kwlist[] = {"key", "message", NULL};
+    // sm3_hmac(key: bytes, message: bytes) -> bytes
+    ok = PyArg_ParseTupleAndKeywords(
+            args, keywds, "y#y#", kwlist,
+            &key, &key_length,
+            &message, &message_length);
+    if (!ok) {
+        return NULL;
+    }
+    SM3_HMAC_CTX hmac_ctx;
+    uint8_t digest[SM3_HMAC_SIZE];
+    sm3_hmac_init(&hmac_ctx, (uint8_t *) key, key_length);
+    sm3_hmac_update(&hmac_ctx, (uint8_t *) message, message_length);
+    sm3_hmac_finish(&hmac_ctx, digest);
+    return Py_BuildValue("y#", digest, (Py_ssize_t) SM3_HMAC_SIZE);
+}
+
+static PyObject *
+gmsslext_sm3_kdf(PyObject *self, PyObject *args, PyObject *keywds) {
+    const char *key;
+    Py_ssize_t key_length;
+    unsigned long outlen;
+    int ok;
+
+    static char *kwlist[] = {"key", "outlen", NULL};
+    // sm3_kdf(key: bytes, outlen: int) -> bytes
+    ok = PyArg_ParseTupleAndKeywords(
+            args, keywds, "y#k", kwlist,
+            &key, &key_length,
+            &outlen);
+    if (!ok) {
+        return NULL;
+    }
+    char *out = PyMem_RawMalloc(outlen);
+    if (out == NULL) {
+        return PyErr_NoMemory();
+    }
+    SM3_KDF_CTX kdf_ctx;
+    sm3_kdf_init(&kdf_ctx, outlen);
+    sm3_kdf_update(&kdf_ctx, (uint8_t *) key, key_length);
+    sm3_kdf_finish(&kdf_ctx, (uint8_t *) out);
+    PyObject *new_key = Py_BuildValue("y#", out, (Py_ssize_t) outlen);
+    PyMem_RawFree(out);
+    return new_key;
+}
+
+
+static PyObject *
 spam_system(PyObject *self, PyObject *args) {
     const char *command;
     int sts;
@@ -401,7 +476,25 @@ static PyMethodDef SpamMethods[] = {
                 "sm2_verify",
                 (PyCFunction) (void (*)(void)) gmsslext_sm2_verify,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM2 验证签名",
+                        "SM2 验证签名",
+        },
+        {
+                "sm3_hash",
+                (PyCFunction) (void (*)(void)) gmsslext_sm3_hash,
+                METH_VARARGS | METH_KEYWORDS,
+                        "SM3 hash",
+        },
+        {
+                "sm3_hmac",
+                (PyCFunction) (void (*)(void)) gmsslext_sm3_hmac,
+                METH_VARARGS | METH_KEYWORDS,
+                        "SM3 hmac",
+        },
+        {
+                "sm3_kdf",
+                (PyCFunction) (void (*)(void)) gmsslext_sm3_kdf,
+                METH_VARARGS | METH_KEYWORDS,
+                        "SM3 kdf",
         },
         {NULL, NULL, 0, NULL}        /* Sentinel */
 };
