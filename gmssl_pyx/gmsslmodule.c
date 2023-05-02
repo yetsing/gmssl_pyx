@@ -180,11 +180,11 @@ gmsslext_sm2_verify_sm3_digest(PyObject *self, PyObject *args, PyObject *keywds)
         return NULL;
     }
     ret = sm2_verify(&sm2_key, (uint8_t *) digest, (uint8_t *) sig, siglen);
-    if (ret != GMSSL_INNER_OK) {
-        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm2_verify");
-        return NULL;
+    if (ret == 1) {
+        Py_RETURN_TRUE;
+    } else {
+        Py_RETURN_FALSE;
     }
-    return Py_BuildValue("y#", sig, siglen);
 }
 
 static PyObject *
@@ -222,6 +222,7 @@ gmsslext_sm2_sign(PyObject *self, PyObject *args, PyObject *keywds) {
         // 参数 signer_id 传的值不是 None
         signer_id = PyBytes_AsString(signer_id_obj);
         if (signer_id == NULL) {
+            PyErr_SetString(InvalidValueError, "invalid signer_id");
             return NULL;
         }
         signer_id_length = PyBytes_Size(signer_id_obj);
@@ -295,7 +296,7 @@ gmsslext_sm2_verify(PyObject *self, PyObject *args, PyObject *keywds) {
         return NULL;
     }
     const char *signer_id = NULL;
-    size_t signer_id_length = 0;
+    Py_ssize_t signer_id_length = 0;
     if (signer_id_obj == NULL) {
         // 没有传 signer_id ，使用默认值
         signer_id = SM2_DEFAULT_ID;
@@ -304,6 +305,7 @@ gmsslext_sm2_verify(PyObject *self, PyObject *args, PyObject *keywds) {
         // 参数 signer_id 传的值不是 None
         signer_id = PyBytes_AsString(signer_id_obj);
         if (signer_id == NULL) {
+            PyErr_SetString(InvalidValueError, "invalid signer_id");
             return NULL;
         }
         signer_id_length = PyBytes_Size(signer_id_obj);

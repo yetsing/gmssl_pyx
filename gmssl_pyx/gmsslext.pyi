@@ -10,6 +10,8 @@ def sm2_key_generate() -> t.Tuple[bytes, bytes]:
     """生成 SM2 公私密钥对，公钥 64 字节，私钥 32 字节
 
     Returns: public_key, private_key
+
+    Raises: GmsslInnerError
     """
     ...
 
@@ -21,6 +23,8 @@ def sm2_encrypt(public_key: bytes, plaintext: bytes) -> bytes:
         plaintext: 明文数据，长度范围为 [1, 255]
 
     Returns: 密文数据，编码格式为 ASN.1 DER ，模式为 C1C3C2
+
+    Raises: InvalidValueError, GmsslInnerError
     """
     ...
 
@@ -32,6 +36,8 @@ def sm2_decrypt(private_key: bytes, ciphertext: bytes) -> bytes:
         ciphertext: 密文数据，长度范围为 [45, 366]，编码格式为 ASN.1 DER ，模式为 C1C3C2
 
     Returns: 明文数据
+
+    Raises: InvalidValueError, GmsslInnerError
     """
     ...
 
@@ -43,6 +49,8 @@ def sm2_sign_sm3_digest(private_key: bytes, digest: bytes) -> bytes:
         digest: SM3 摘要数据，长度为 32 字节
 
     Returns: 签名数据，编码格式为 ASN.1 DER ，模式为 rs
+
+    Raises: InvalidValueError, GmsslInnerError
     """
     ...
 
@@ -55,6 +63,8 @@ def sm2_verify_sm3_digest(public_key: bytes, digest: bytes, signature: bytes) ->
         signature: 签名数据，编码格式为 ASN.1 DER ，模式为 rs
 
     Returns: 验证结果
+
+    Raises: InvalidValueError, GmsslInnerError
     """
     ...
 
@@ -74,6 +84,8 @@ def sm2_sign(
             如果传 None ，签名不包括 SM3 杂凑值 z ，否则包括 SM3 杂凑值 z
 
     Returns: 签名数据，编码格式为 ASN.1 DER ，模式为 rs
+
+    Raises: InvalidValueError, GmsslInnerError
     """
     ...
 
@@ -95,6 +107,8 @@ def sm2_verify(
             如果传 None ，签名不包括 SM3 杂凑值 z ，否则包括 SM3 杂凑值 z
 
     Returns: 验证结果
+
+    Raises: InvalidValueError, GmsslInnerError
     """
     ...
 
