@@ -38,6 +38,8 @@ def download_source_code():
 
 
 def compile_gmssl():
+    if os.path.exists("./GmSSL-3.1.0/build/bin/libgmssl.a"):
+        return
     cwd = os.getcwd()
     # 下载 GmSSL 库编译成静态库
     # 1.下载源码并解压
