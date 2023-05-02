@@ -11,6 +11,13 @@ from gmssl_pyx.gmsslext import (
     sm3_hash,
     sm3_hmac,
     sm3_kdf,
+    # SM4
+    sm4_cbc_padding_encrypt,
+    sm4_cbc_padding_decrypt,
+    sm4_ctr_encrypt,
+    sm4_ctr_decrypt,
+    sm4_gcm_encrypt,
+    sm4_gcm_decrypt,
     # exception
     GmsslInnerError,
     InvalidValueError,
@@ -22,4 +29,8 @@ from gmssl_pyx._version import (
     __version__,
 )
 
-SM2_DEFAULT_SIGNER_ID = b"1234567812345678"
+SM2_DEFAULT_SIGNER_ID: bytes = b"1234567812345678"
+
+SM4_KEY_SIZE: int = 16
+SM4_BLOCK_SIZE:int = 16
+SM4_NUM_ROUNDS: int = 32

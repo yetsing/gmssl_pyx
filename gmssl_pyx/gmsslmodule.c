@@ -6,6 +6,8 @@
 #include <Python.h>
 
 #include "gmssl/sm2.h"
+#include "gmssl/sm3.h"
+#include "gmssl/sm4.h"
 
 #define GMSSL_INNER_OK 1
 
@@ -18,6 +20,7 @@ gmsslext_sm2_key_generate(PyObject *self, PyObject *args) {
     SM2_KEY sm2_key;
     int ret, ok;
 
+    // sm2_key_generate() -> t.Tuple[bytes, bytes]
     // 函数没有参数
     ok = PyArg_ParseTuple(args, "");
     if (!ok) {
@@ -44,6 +47,7 @@ gmsslext_sm2_encrypt(PyObject *self, PyObject *args, PyObject *keywds) {
     static char *kwlist[] = {"public_key", "plaintext", NULL};
     int ret;
 
+    // sm2_encrypt(public_key: bytes, plaintext: bytes) -> bytes
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "y#y#", kwlist, &public_key, &key_length, &plaintext,
                                      &text_length)) {
         return NULL;
@@ -81,6 +85,7 @@ gmsslext_sm2_decrypt(PyObject *self, PyObject *args, PyObject *keywds) {
     static char *kwlist[] = {"private_key", "ciphertext", NULL};
     int ret;
 
+    // sm2_decrypt(private_key: bytes, ciphertext: bytes) -> bytes
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "y#y#", kwlist, &private_key, &key_length, &ciphertext,
                                      &text_length)) {
         return NULL;
@@ -118,6 +123,7 @@ gmsslext_sm2_sign_sm3_digest(PyObject *self, PyObject *args, PyObject *keywds) {
     static char *kwlist[] = {"private_key", "digest", NULL};
     int ret;
 
+    // sm2_sign_sm3_digest(private_key: bytes, digest: bytes) -> bytes
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "y#y#", kwlist, &private_key, &key_length, &digest,
                                      &digest_length)) {
         return NULL;
@@ -155,6 +161,7 @@ gmsslext_sm2_verify_sm3_digest(PyObject *self, PyObject *args, PyObject *keywds)
     static char *kwlist[] = {"public_key", "digest", "signature", NULL};
     int ret;
 
+    // sm2_verify_sm3_digest(public_key: bytes, digest: bytes, signature: bytes) -> bool
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "y#y#y#", kwlist, &public_key, &key_length, &digest, &digest_length,
                                      &sig, &siglen)) {
         return NULL;
@@ -410,31 +417,309 @@ gmsslext_sm3_kdf(PyObject *self, PyObject *args, PyObject *keywds) {
     return new_key;
 }
 
-
 static PyObject *
-spam_system(PyObject *self, PyObject *args) {
-    const char *command;
-    int sts;
-
-    if (!PyArg_ParseTuple(args, "s", &command))
-        return NULL;
-    sts = system(command);
-    if (sts < 0) {
-        PyErr_SetString(GmsslInnerError, "System command failed");
+gmsslext_sm4_cbc_padding_encrypt(PyObject *self, PyObject *args, PyObject *keywds) {
+    const char *key;
+    Py_ssize_t key_length;
+    const char *iv;
+    Py_ssize_t iv_length;
+    const char *plaintext;
+    Py_ssize_t plaintext_length;
+    int ok;
+    static char *kwlist[] = {"key", "iv", "plaintext", NULL};
+    // sm4_cbc_pading_encrypt(key: bytes, iv: bytes, plaintext: bytes) -> bytes
+    ok = PyArg_ParseTupleAndKeywords(
+            args,
+            keywds,
+            "y#y#y#",
+            kwlist,
+            &key, &key_length,
+            &iv, &iv_length,
+            &plaintext, &plaintext_length);
+    if (!ok) {
         return NULL;
     }
-    return PyLong_FromLong(sts);
+    if (key_length != SM4_KEY_SIZE) {
+        PyErr_SetString(InvalidValueError, "invalid sm4 key length");
+        return NULL;
+    }
+    if (iv_length != SM4_BLOCK_SIZE) {
+        PyErr_SetString(InvalidValueError, "invalid sm4 iv length");
+        return NULL;
+    }
+    SM4_KEY sm4_key;
+    // 后面最多填充 SM4_BLOCK_SIZE 个字节
+    Py_ssize_t outlen = plaintext_length + SM4_BLOCK_SIZE;
+    char *out = PyMem_RawMalloc(outlen);
+    if (out == NULL) {
+        return PyErr_NoMemory();
+    }
+    sm4_set_encrypt_key(&sm4_key, (uint8_t *) key);
+    sm4_cbc_padding_encrypt(
+            &sm4_key, (uint8_t *) iv,
+            (uint8_t *) plaintext, plaintext_length,
+            (uint8_t *) out, (size_t *) &outlen);
+    PyObject *ciphertext_obj = Py_BuildValue("y#", out, outlen);
+    PyMem_RawFree(out);
+    return ciphertext_obj;
 }
+
+static PyObject *
+gmsslext_sm4_cbc_padding_decrypt(PyObject *self, PyObject *args, PyObject *keywds) {
+    const char *key;
+    Py_ssize_t key_length;
+    const char *iv;
+    Py_ssize_t iv_length;
+    const char *ciphertext;
+    Py_ssize_t ciphertext_length;
+    int ok;
+    static char *kwlist[] = {"key", "iv", "ciphertext", NULL};
+    // sm4_cbc_pading_encrypt(key: bytes, iv: bytes, ciphertext: bytes) -> bytes
+    ok = PyArg_ParseTupleAndKeywords(
+            args,
+            keywds,
+            "y#y#y#",
+            kwlist,
+            &key, &key_length,
+            &iv, &iv_length,
+            &ciphertext, &ciphertext_length);
+    if (!ok) {
+        return NULL;
+    }
+    if (key_length != SM4_KEY_SIZE) {
+        PyErr_SetString(InvalidValueError, "invalid sm4 key length");
+        return NULL;
+    }
+    if (iv_length != SM4_BLOCK_SIZE) {
+        PyErr_SetString(InvalidValueError, "invalid sm4 iv length");
+        return NULL;
+    }
+    SM4_KEY sm4_key;
+    // 后面最多填充 SM4_BLOCK_SIZE 个字节
+    Py_ssize_t outlen = ciphertext_length;
+    char *out = PyMem_RawMalloc(outlen);
+    if (out == NULL) {
+        return PyErr_NoMemory();
+    }
+    sm4_set_decrypt_key(&sm4_key, (uint8_t *) key);
+    sm4_cbc_padding_decrypt(
+            &sm4_key, (uint8_t *) iv,
+            (uint8_t *) ciphertext, ciphertext_length,
+            (uint8_t *) out, (size_t *) &outlen);
+    PyObject *plaintext_obj = Py_BuildValue("y#", out, outlen);
+    PyMem_RawFree(out);
+    return plaintext_obj;
+}
+
+static PyObject *
+gmsslext_sm4_ctr_encrypt(PyObject *self, PyObject *args, PyObject *keywds) {
+    const char *key;
+    Py_ssize_t key_length;
+    const char *ctr;
+    Py_ssize_t ctr_length;
+    const char *plaintext;
+    Py_ssize_t plaintext_length;
+    int ok;
+    static char *kwlist[] = {"key", "ctr", "plaintext", NULL};
+    // sm4_ctr_encrypt(key: bytes, ctr: bytes, plaintext: bytes) -> bytes
+    ok = PyArg_ParseTupleAndKeywords(
+            args,
+            keywds,
+            "y#y#y#",
+            kwlist,
+            &key, &key_length,
+            &ctr, &ctr_length,
+            &plaintext, &plaintext_length);
+    if (!ok) {
+        return NULL;
+    }
+    if (key_length != SM4_KEY_SIZE) {
+        PyErr_SetString(InvalidValueError, "invalid sm4 key length");
+        return NULL;
+    }
+    if (ctr_length != SM4_BLOCK_SIZE) {
+        PyErr_SetString(InvalidValueError, "invalid sm4 ctr length");
+        return NULL;
+    }
+    SM4_KEY sm4_key;
+    // 密文长度与明文一致
+    char *out = PyMem_RawMalloc(plaintext_length);
+    if (out == NULL) {
+        return PyErr_NoMemory();
+    }
+    sm4_set_encrypt_key(&sm4_key, (uint8_t *) key);
+    // sm4_ctr_encrypt 会修改 ctr ，会导致 Python 端调用者的 ctr 也发生改变，copy 一份来用
+    unsigned char temp_ctr[16];
+    memcpy(temp_ctr, ctr, 16);
+    sm4_ctr_encrypt(
+            &sm4_key, temp_ctr,
+            (uint8_t *) plaintext, plaintext_length,
+            (uint8_t *) out);
+    PyObject *ciphertext_obj = Py_BuildValue("y#", out, plaintext_length);
+    PyMem_RawFree(out);
+    return ciphertext_obj;
+}
+
+static PyObject *
+gmsslext_sm4_ctr_decrypt(PyObject *self, PyObject *args, PyObject *keywds) {
+    const char *key;
+    Py_ssize_t key_length;
+    const char *ctr;
+    Py_ssize_t ctr_length;
+    const char *ciphertext;
+    Py_ssize_t ciphertext_length;
+    int ok;
+    static char *kwlist[] = {"key", "ctr", "ciphertext", NULL};
+    // sm4_ctr_decrypt(key: bytes, ctr: bytes, ciphertext: bytes) -> bytes
+    ok = PyArg_ParseTupleAndKeywords(
+            args,
+            keywds,
+            "y#y#y#",
+            kwlist,
+            &key, &key_length,
+            &ctr, &ctr_length,
+            &ciphertext, &ciphertext_length);
+    if (!ok) {
+        return NULL;
+    }
+    if (key_length != SM4_KEY_SIZE) {
+        PyErr_SetString(InvalidValueError, "invalid sm4 key length");
+        return NULL;
+    }
+    if (ctr_length != SM4_BLOCK_SIZE) {
+        PyErr_SetString(InvalidValueError, "invalid sm4 ctr length");
+        return NULL;
+    }
+
+    SM4_KEY sm4_key;
+    // 明文和密文长度一致
+    char *out = PyMem_RawMalloc(ciphertext_length);
+    if (out == NULL) {
+        return PyErr_NoMemory();
+    }
+    sm4_set_encrypt_key(&sm4_key, (uint8_t *) key);
+
+    // sm4_ctr_decrypt 会修改 ctr ，会导致 Python 端调用者的 ctr 也发生改变，copy 一份来用
+    unsigned char temp_ctr[16];
+    memcpy(temp_ctr, ctr, 16);
+    sm4_ctr_decrypt(
+            &sm4_key, temp_ctr,
+            (uint8_t *) ciphertext, ciphertext_length,
+            (uint8_t *) out);
+    PyObject *plaintext_obj = Py_BuildValue("y#", out, ciphertext_length);
+    PyMem_RawFree(out);
+    return plaintext_obj;
+}
+
+static PyObject *
+gmsslext_sm4_gcm_encrypt(PyObject *self, PyObject *args, PyObject *keywds) {
+    int ok;
+    const char *key;
+    Py_ssize_t key_length;
+    const char *iv;
+    Py_ssize_t iv_length;
+    const char *aad;
+    Py_ssize_t aad_length;
+    const char *plaintext;
+    Py_ssize_t plaintext_length;
+    static char *kwlist[] = {"key", "iv", "aad", "plaintext", NULL};
+    // sm4_gcm_encrypt(key: bytes, iv: bytes, aad: bytes, plaintext: bytes) -> t.Tuple[bytes, bytes]
+    ok = PyArg_ParseTupleAndKeywords(
+            args,
+            keywds,
+            "y#y#y#y#",
+            kwlist,
+            &key, &key_length,
+            &iv, &iv_length,
+            &aad, &aad_length,
+            &plaintext, &plaintext_length);
+    if (!ok) {
+        return NULL;
+    }
+    if (key_length != SM4_KEY_SIZE) {
+        PyErr_SetString(InvalidValueError, "invalid sm4 key length");
+        return NULL;
+    }
+    SM4_KEY sm4_key;
+    char tag[16];
+    // 密文长度与明文一致
+    char *out = PyMem_RawMalloc(plaintext_length);
+    if (out == NULL) {
+        return PyErr_NoMemory();
+    }
+    sm4_set_encrypt_key(&sm4_key, (uint8_t *) key);
+    int ret = sm4_gcm_encrypt(
+            &sm4_key,
+            (uint8_t *) iv, iv_length,
+            (uint8_t *) aad, aad_length,
+            (uint8_t *) plaintext, plaintext_length,
+            (uint8_t *) out, sizeof(tag), (uint8_t *) tag);
+    if (ret != GMSSL_INNER_OK) {
+        PyErr_SetString(InvalidValueError, "libgmssl inner error in sm4_gcm_encrypt");
+        return NULL;
+    }
+    PyObject *obj = Py_BuildValue("y#y#", out, plaintext_length, tag, (Py_ssize_t) 16);
+    PyMem_RawFree(out);
+    return obj;
+}
+
+static PyObject *
+gmsslext_sm4_gcm_decrypt(PyObject *self, PyObject *args, PyObject *keywds) {
+    int ok;
+    const char *key;
+    Py_ssize_t key_length;
+    const char *iv;
+    Py_ssize_t iv_length;
+    const char *aad;
+    Py_ssize_t aad_length;
+    const char *ciphertext;
+    Py_ssize_t ciphertext_length;
+    const char *tag;
+    Py_ssize_t tag_length;
+    static char *kwlist[] = {"key", "iv", "aad", "ciphertext", "tag", NULL};
+    // sm4_gcm_decrypt(key: bytes, iv: bytes, aad: bytes, ciphertext: bytes, tag: bytes) -> bytes
+    ok = PyArg_ParseTupleAndKeywords(
+            args,
+            keywds,
+            "y#y#y#y#y#",
+            kwlist,
+            &key, &key_length,
+            &iv, &iv_length,
+            &aad, &aad_length,
+            &ciphertext, &ciphertext_length,
+            &tag, &tag_length);
+    if (!ok) {
+        return NULL;
+    }
+    if (key_length != SM4_KEY_SIZE) {
+        PyErr_SetString(InvalidValueError, "invalid sm4 key length");
+        return NULL;
+    }
+    SM4_KEY sm4_key;
+    // 密文长度与明文一致
+    char *out = PyMem_RawMalloc(ciphertext_length);
+    if (out == NULL) {
+        return PyErr_NoMemory();
+    }
+    sm4_set_encrypt_key(&sm4_key, (uint8_t *) key);
+    int ret = sm4_gcm_decrypt(
+            &sm4_key,
+            (uint8_t *) iv, iv_length,
+            (uint8_t *) aad, aad_length,
+            (uint8_t *) ciphertext, ciphertext_length,
+            (uint8_t *) tag, tag_length, (uint8_t *) out);
+    if (ret != GMSSL_INNER_OK) {
+        PyErr_SetString(InvalidValueError, "libgmssl inner error in sm4_gcm_decrypt");
+        return NULL;
+    }
+    PyObject *obj = Py_BuildValue("y#", out, ciphertext_length);
+    PyMem_RawFree(out);
+    return obj;
+}
+
 
 // 定义模块暴露的函数
 static PyMethodDef SpamMethods[] = {
-        {
-                "system",
-                spam_system,
-                METH_VARARGS,
-
-                "Execute a shell command.",
-        },
         {
                 "sm2_key_generate",
                 gmsslext_sm2_key_generate,
@@ -495,6 +780,42 @@ static PyMethodDef SpamMethods[] = {
                 (PyCFunction) (void (*)(void)) gmsslext_sm3_kdf,
                 METH_VARARGS | METH_KEYWORDS,
                         "SM3 kdf",
+        },
+        {
+                "sm4_cbc_padding_encrypt",
+                (PyCFunction) (void (*)(void)) gmsslext_sm4_cbc_padding_encrypt,
+                METH_VARARGS | METH_KEYWORDS,
+                        "SM3 cbc encrypt, use PKCS#7 padding",
+        },
+        {
+                "sm4_cbc_padding_decrypt",
+                (PyCFunction) (void (*)(void)) gmsslext_sm4_cbc_padding_decrypt,
+                METH_VARARGS | METH_KEYWORDS,
+                        "SM3 cbc decrypt, use PKCS#7 padding",
+        },
+        {
+                "sm4_ctr_encrypt",
+                (PyCFunction) (void (*)(void)) gmsslext_sm4_ctr_encrypt,
+                METH_VARARGS | METH_KEYWORDS,
+                        "SM3 ctr encrypt",
+        },
+        {
+                "sm4_ctr_decrypt",
+                (PyCFunction) (void (*)(void)) gmsslext_sm4_ctr_decrypt,
+                METH_VARARGS | METH_KEYWORDS,
+                        "SM3 ctr decrypt",
+        },
+        {
+                "sm4_gcm_encrypt",
+                (PyCFunction) (void (*)(void)) gmsslext_sm4_gcm_encrypt,
+                METH_VARARGS | METH_KEYWORDS,
+                "SM3 gcm encrypt",
+        },
+        {
+                "sm4_gcm_decrypt",
+                (PyCFunction) (void (*)(void)) gmsslext_sm4_gcm_decrypt,
+                METH_VARARGS | METH_KEYWORDS,
+                "SM3 gcm decrypt",
         },
         {NULL, NULL, 0, NULL}        /* Sentinel */
 };

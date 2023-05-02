@@ -129,3 +129,92 @@ def sm3_kdf(key: bytes, outlen: int) -> bytes:
     Returns: 输出数据
     """
     ...
+
+
+def sm4_cbc_padding_encrypt(key: bytes, iv: bytes, plaintext: bytes) -> bytes:
+    """使用 SM4 加密数据，模式为 CBC ， padding 采用 PKCS#7
+
+    Args:
+        key: 密钥
+        iv: 初始向量
+        plaintext: 明文数据
+
+    Returns: 密文数据
+
+    Raises: InvalidValueError
+    """
+    ...
+
+
+def sm4_cbc_padding_decrypt(key: bytes, iv: bytes, ciphertext: bytes) -> bytes:
+    """使用 SM4 解密数据，模式为 CBC ， padding 采用 PKCS#7
+
+    Args:
+        key: 密钥
+        iv: 初始向量
+        ciphertext: 密文数据
+
+    Returns: 明文数据
+
+    Raises: InvalidValueError
+    """
+    ...
+
+
+def sm4_ctr_encrypt(key: bytes, ctr: bytes, plaintext: bytes) -> bytes:
+    """使用 SM4 加密数据，模式为 CTR
+
+    Args:
+        key: 密钥
+        ctr: 初始计数器
+        plaintext: 明文数据
+
+    Returns: 密文数据
+
+    Raises: InvalidValueError
+    """
+    ...
+
+
+def sm4_ctr_decrypt(key: bytes, ctr: bytes, ciphertext: bytes) -> bytes:
+    """使用 SM4 解密数据，模式为 CTR
+
+    Args:
+        key: 密钥
+        ctr: 初始计数器
+        ciphertext: 密文数据
+
+    Returns: 明文数据
+
+    Raises: InvalidValueError
+    """
+    ...
+
+
+def sm4_gcm_encrypt(key: bytes, iv: bytes, aad: bytes, plaintext: bytes) -> t.Tuple[bytes, bytes]:
+    """使用 SM4 加密数据，模式为 GCM
+
+    Args:
+        key: 密钥
+        iv: 初始化向量，也被叫做 nonce
+        aad: 附加数据，也被叫做 associated_data
+        plaintext: 明文数据
+
+    Returns: 密文数据和标签
+    """
+    ...
+
+
+def sm4_gcm_decrypt(key: bytes, iv: bytes, aad: bytes, ciphertext: bytes, tag: bytes) -> bytes:
+    """使用 SM4 解密数据，模式为 GCM
+
+    Args:
+        key: 密钥
+        iv: 初始化向量，也被叫做 nonce
+        aad: 附加数据，也被叫做 associated_data
+        ciphertext: 密文数据
+        tag: 标签
+
+    Returns: 明文数据
+    """
+    ...

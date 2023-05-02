@@ -21,3 +21,12 @@ import examples.sm3_hmac
 
 print("----------------sm3_kdf----------------")
 import examples.sm3_kdf
+
+print("----------------sm4_cbc_encrypt_and_decrypt----------------")
+import examples.sm4_cbc_encrypt_and_decrypt
+
+print("----------------sm4_ctr_encrypt_and_decrypt----------------")
+import examples.sm4_ctr_encrypt_and_decrypt
+
+print("----------------sm4_gcm_encrypt_and_decrypt----------------")
+import examples.sm4_gcm_encrypt_and_decrypt
