@@ -8,4 +8,5 @@ fi
 
 set -ex
 
+# 运行测试
 python -m unittest discover -v tests

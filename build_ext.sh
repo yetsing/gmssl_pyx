@@ -8,4 +8,5 @@ fi
 
 set -ex
 
+# 构建 c extension
 python setup.py build_ext --inplace

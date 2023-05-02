@@ -1,3 +1,6 @@
+"""
+运行 examples 下的例子代码
+"""
 print("----------------sm2_encrypt_and_decrypt----------------")
 import examples.sm2_encrypt_and_decrypt
 
