@@ -23,16 +23,46 @@ jobs:
           - os: windows-2019
             python: 37
             platform_id: win_amd64
+          - os: windows-2019
+            python: 38
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 39
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 310
+            platform_id: win_amd64
 
           # Linux 64 bit manylinux
           - os: ubuntu-20.04
             python: 37
             platform_id: manylinux_x86_64
             manylinux_image: manylinux1
+          - os: ubuntu-20.04
+            python: 38
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux1
+          - os: ubuntu-20.04
+            python: 39
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux1
+          - os: ubuntu-20.04
+            python: 310
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux1
 
           # MacOS x86_64
           - os: macos-11
             python: 37
+            platform_id: macosx_x86_64
+          - os: macos-11
+            python: 38
+            platform_id: macosx_x86_64
+          - os: macos-latest
+            python: 39
+            platform_id: macosx_x86_64
+          - os: macos-latest
+            python: 310
             platform_id: macosx_x86_64
 
     steps:

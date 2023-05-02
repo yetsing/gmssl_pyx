@@ -4,6 +4,14 @@ python wrapper of [GmSSL](https://github.com/guanzhi/GmSSL)
 
 使用的版本是 [GmSSL-3.1.0](https://github.com/guanzhi/GmSSL/releases/tag/v3.1.0)
 
+支持 Python 3.7, 3.8, 3.9, 3.10
+
+## 安装
+
+```shell
+pip install gmssl_pyx
+```
+
 ## SM2
 
 ### 加密和解密
