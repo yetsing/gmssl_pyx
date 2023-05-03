@@ -9,7 +9,7 @@ python wrapper of [GmSSL](https://github.com/guanzhi/GmSSL)
 ## 安装
 
 ```shell
-pip install gmssl_pyx
+pip install gmssl-pyx
 ```
 
 ## SM2
