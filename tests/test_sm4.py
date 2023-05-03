@@ -35,18 +35,28 @@ class SM4TestCase(unittest.TestCase):
         ciphertext = b"ciphertext"
         with self.assertRaises(InvalidValueError) as cm:
             sm4_cbc_padding_encrypt(key, iv, plaintext)
-            self.assertEqual(str(cm.exception), "invalid sm4 key length")
+        self.assertEqual(str(cm.exception), "invalid sm4 key length")
         with self.assertRaises(InvalidValueError) as cm:
             sm4_cbc_padding_decrypt(key, iv, ciphertext)
-            self.assertEqual(str(cm.exception), "invalid sm4 key length")
+        self.assertEqual(str(cm.exception), "invalid sm4 key length")
+
         key = secrets.token_bytes(SM4_KEY_SIZE)
         iv = secrets.token_bytes(SM4_BLOCK_SIZE + 1)
         with self.assertRaises(InvalidValueError) as cm:
             sm4_cbc_padding_encrypt(key, iv, plaintext)
-            self.assertEqual(str(cm.exception), "invalid sm4 iv length")
+        self.assertEqual(str(cm.exception), "invalid sm4 iv length")
         with self.assertRaises(InvalidValueError) as cm:
             sm4_cbc_padding_decrypt(key, iv, ciphertext)
-            self.assertEqual(str(cm.exception), "invalid sm4 iv length")
+        self.assertEqual(str(cm.exception), "invalid sm4 iv length")
+
+        key = secrets.token_bytes(SM4_KEY_SIZE)
+        iv = secrets.token_bytes(SM4_BLOCK_SIZE)
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_cbc_padding_encrypt(key, iv, b"")
+        self.assertEqual(str(cm.exception), "empty plaintext")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_cbc_padding_decrypt(key, iv, b"")
+        self.assertEqual(str(cm.exception), "empty ciphertext")
 
     def test_ctr_encrypt_and_decrypt(self):
         for i in range(3):
@@ -65,18 +75,28 @@ class SM4TestCase(unittest.TestCase):
         ciphertext = b"ciphertext"
         with self.assertRaises(InvalidValueError) as cm:
             sm4_ctr_encrypt(key, ctr, plaintext)
-            self.assertEqual(str(cm.exception), "invalid sm4 key length")
+        self.assertEqual(str(cm.exception), "invalid sm4 key length")
         with self.assertRaises(InvalidValueError) as cm:
             sm4_ctr_decrypt(key, ctr, ciphertext)
-            self.assertEqual(str(cm.exception), "invalid sm4 key length")
+        self.assertEqual(str(cm.exception), "invalid sm4 key length")
+
         key = secrets.token_bytes(SM4_KEY_SIZE)
         ctr = secrets.token_bytes(SM4_BLOCK_SIZE + 1)
         with self.assertRaises(InvalidValueError) as cm:
             sm4_ctr_encrypt(key, ctr, plaintext)
-            self.assertEqual(str(cm.exception), "invalid sm4 iv length")
+        self.assertEqual(str(cm.exception), "invalid sm4 ctr length")
         with self.assertRaises(InvalidValueError) as cm:
             sm4_ctr_decrypt(key, ctr, ciphertext)
-            self.assertEqual(str(cm.exception), "invalid sm4 iv length")
+        self.assertEqual(str(cm.exception), "invalid sm4 ctr length")
+
+        key = secrets.token_bytes(SM4_KEY_SIZE)
+        ctr = secrets.token_bytes(SM4_BLOCK_SIZE)
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_ctr_encrypt(key, ctr, b"")
+        self.assertEqual(str(cm.exception), "empty plaintext")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_ctr_decrypt(key, ctr, b"")
+        self.assertEqual(str(cm.exception), "empty ciphertext")
 
     def test_gcm_encrypt_and_decrypt(self):
         for i in range(3):
@@ -99,7 +119,30 @@ class SM4TestCase(unittest.TestCase):
         ciphertext = b"ciphertext"
         with self.assertRaises(InvalidValueError) as cm:
             sm4_gcm_encrypt(key, iv, aad, plaintext)
-            self.assertEqual(str(cm.exception), "invalid sm4 key length")
+        self.assertEqual(str(cm.exception), "invalid sm4 key length")
         with self.assertRaises(InvalidValueError) as cm:
             sm4_gcm_decrypt(key, iv, aad, ciphertext, tag=secrets.token_bytes(16))
-            self.assertEqual(str(cm.exception), "invalid sm4 key length")
+        self.assertEqual(str(cm.exception), "invalid sm4 key length")
+
+        key = secrets.token_bytes(SM4_KEY_SIZE)
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_gcm_encrypt(key, b"", aad, plaintext)
+        self.assertEqual(str(cm.exception), "invalid sm4 iv length")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_gcm_encrypt(key, b"1" * 65, aad, plaintext)
+        self.assertEqual(str(cm.exception), "invalid sm4 iv length")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_gcm_decrypt(key, b"", aad, ciphertext, tag=secrets.token_bytes(16))
+        self.assertEqual(str(cm.exception), "invalid sm4 iv length")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_gcm_decrypt(
+                key, b"1" * 65, aad, ciphertext, tag=secrets.token_bytes(16)
+            )
+        self.assertEqual(str(cm.exception), "invalid sm4 iv length")
+
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_gcm_encrypt(key, iv, aad, b"")
+        self.assertEqual(str(cm.exception), "empty plaintext")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_gcm_decrypt(key, iv, aad, b"", tag=secrets.token_bytes(16))
+        self.assertEqual(str(cm.exception), "empty ciphertext")

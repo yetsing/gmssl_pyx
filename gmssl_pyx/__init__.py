@@ -32,5 +32,5 @@ from gmssl_pyx._version import (
 SM2_DEFAULT_SIGNER_ID: bytes = b"1234567812345678"
 
 SM4_KEY_SIZE: int = 16
-SM4_BLOCK_SIZE:int = 16
+SM4_BLOCK_SIZE: int = 16
 SM4_NUM_ROUNDS: int = 32

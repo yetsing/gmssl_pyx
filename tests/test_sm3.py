@@ -7,6 +7,7 @@ from gmssl_pyx import (
     sm3_hash,
     sm3_hmac,
     sm3_kdf,
+    InvalidValueError,
 )
 
 
@@ -30,6 +31,11 @@ class SM3TestCase(unittest.TestCase):
         got_hash = sm3_hash(message=message)
         self.assertEqual(got_hash, expected_hash)
 
+    def test_hash_error(self):
+        with self.assertRaises(InvalidValueError) as cm:
+            sm3_hash(b"")
+        self.assertEqual(str(cm.exception), "empty message")
+
     def test_hmac(self):
         n = random.randint(1, 4096)
         message = secrets.token_bytes(n)
@@ -46,10 +52,20 @@ class SM3TestCase(unittest.TestCase):
         )
         self.assertEqual(hmac_data.hex(), expected_hex)
 
+    def test_hmac_error(self):
+        key = secrets.token_bytes(32)
+        with self.assertRaises(InvalidValueError) as cm:
+            sm3_hmac(key, b"")
+        self.assertEqual(str(cm.exception), "empty message")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm3_hmac(b"", b"hello")
+        self.assertEqual(str(cm.exception), "empty key")
+
     def test_kdf(self):
         key = secrets.token_bytes(32)
-        new_key = sm3_kdf(key, 64)
-        self.assertEqual(len(new_key), 64)
+        for i in range(1, 2 * len(key)):
+            new_key = sm3_kdf(key, i)
+            self.assertEqual(len(new_key), i)
 
         key = b"hello world"
         new_key = sm3_kdf(key, 32)
@@ -57,3 +73,12 @@ class SM3TestCase(unittest.TestCase):
             "52bd8a3dac8ccc8d9fac365005a7e210f80fe450033dd71e3ecdf120862747a6"
         )
         self.assertEqual(new_key, expected_key)
+
+    def test_kdf_error(self):
+        key = secrets.token_bytes(32)
+        with self.assertRaises(InvalidValueError) as cm:
+            sm3_kdf(b"", 32)
+        self.assertEqual(str(cm.exception), "empty key")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm3_kdf(key, 0)
+        self.assertEqual(str(cm.exception), "outlen must be greater than zero")

@@ -61,9 +61,9 @@ class SM2TestCase(unittest.TestCase):
 
         with self.assertRaises(InvalidValueError):
             sm2_decrypt(public_key, b"hello" * 10)
-        with self.assertRaises(GmsslInnerError):
+        with self.assertRaises(InvalidValueError):
             sm2_decrypt(private_key, b"1" * 44)
-        with self.assertRaises(GmsslInnerError):
+        with self.assertRaises(InvalidValueError):
             sm2_decrypt(private_key, b"1" * 367)
         with self.assertRaises(TypeError):
             sm2_decrypt("a" * 32, b"1" * 60)
@@ -159,6 +159,38 @@ class SM2TestCase(unittest.TestCase):
             signer_id=signer_id,
         )
         self.assertFalse(verify)
+
+    def test_sm2_sign_and_verify_error(self):
+        public_key, private_key = sm2_key_generate()
+        message = b"hello world"
+        with self.assertRaises(InvalidValueError) as cm:
+            sm2_sign(private_key[:31], public_key, message)
+        self.assertEqual(str(cm.exception), "invalid public_key or private_key length")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm2_sign(private_key, public_key[:63], message)
+        self.assertEqual(str(cm.exception), "invalid public_key or private_key length")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm2_sign(private_key, public_key, b"")
+        self.assertEqual(str(cm.exception), "empty message")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm2_sign(private_key, public_key, message, signer_id="")
+        self.assertEqual(str(cm.exception), "invalid signer_id length")
+
+        with self.assertRaises(InvalidValueError) as cm:
+            sm2_verify(private_key[:31], public_key, message, b"signature")
+        self.assertEqual(str(cm.exception), "invalid public_key or private_key")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm2_verify(private_key, public_key[:63], message, b"signature")
+        self.assertEqual(str(cm.exception), "invalid public_key or private_key")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm2_verify(private_key, public_key, b"", b"signature")
+        self.assertEqual(str(cm.exception), "empty message")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm2_verify(private_key, public_key, message, b"")
+        self.assertEqual(str(cm.exception), "empty signature")
+        with self.assertRaises(InvalidValueError) as cm:
+            sm2_verify(private_key, public_key, message, b"signature", signer_id="")
+        self.assertEqual(str(cm.exception), "invalid signer_id length")
 
     def test_normalize_sm2_public_key(self):
         raw_public_key, _ = sm2_key_generate()
