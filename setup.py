@@ -38,17 +38,18 @@ def download_source_code():
 
 
 def compile_gmssl():
-    if os.path.exists("./GmSSL-3.1.0/build/bin/libgmssl.a"):
+    if os.path.exists("./GmSSL/build/bin/libgmssl.a"):
         return
     cwd = os.getcwd()
-    # 下载 GmSSL 库编译成静态库
-    # 1.下载源码并解压
-    download_source_code()
+    # 使用了 git submodule 的形式，不需要再单独下载源码
+    # # 下载 GmSSL 库编译成静态库
+    # # 1.下载源码并解压
+    # download_source_code()
 
-    os.chdir("GmSSL-3.1.0")
+    os.chdir("GmSSL")
     if sys.platform.startswith("linux"):
         # 2. 修改 CMakeLists.txt ，直接编译会报错
-        # /usr/bin/ld: ./GmSSL-3.1.0/build/bin/libgmssl.a(sm2_key.c.o): relocation R_X86_64_PC32 against symbol `stderr@@GLIBC_2.2.5' can not be used when making a shared object; recompile with -fPIC
+        # /usr/bin/ld: ./GmSSL/build/bin/libgmssl.a(sm2_key.c.o): relocation R_X86_64_PC32 against symbol `stderr@@GLIBC_2.2.5' can not be used when making a shared object; recompile with -fPIC
         cmake_filename = "CMakeLists.txt"
         with open(cmake_filename, "r", encoding=utf8) as f:
             text = f.read()
@@ -98,20 +99,22 @@ class CompileGmSSLLibrary(build_ext):
 
 def create_extension():
     extra_link_args = []
-    library_dirs = ["./GmSSL-3.1.0/build/bin"]
+    library_dirs = ["./GmSSL/build/bin"]
     libraries = ["gmssl"]
     if sys.platform.startswith("darwin"):
         # macos Symbol not found: _kSecRandomDefault
-        # 对应 GmSSL-3.1.0/src/rand_apple.c
+        # 对应 GmSSL/src/rand_apple.c
         extra_link_args = ["-framework", "Security"]
     elif sys.platform.startswith("win"):
-        # windows security random, 对应 GmSSL-3.1.0/src/rand_win.c
-        library_dirs = ["./GmSSL-3.1.0/build/bin/Debug"]
+        # windows security random, 对应 GmSSL/src/rand_win.c
+        library_dirs = ["./GmSSL/build/bin/Debug"]
         libraries.append("Advapi32")
     extension = Extension(
         "gmssl_pyx.gmsslext",
-        ["gmssl_pyx/gmsslmodule.c"],
-        include_dirs=["./GmSSL-3.1.0/include"],
+        [
+            "gmssl_pyx/gmsslmodule.c",
+        ],
+        include_dirs=["./GmSSL/include"],
         library_dirs=library_dirs,
         libraries=libraries,
         extra_link_args=extra_link_args,

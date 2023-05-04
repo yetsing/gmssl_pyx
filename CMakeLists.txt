@@ -4,11 +4,12 @@ project(gmssl_pyx C)
 set(CMAKE_C_STANDARD 99)
 include_directories(
         ~/.pyenv/versions/3.7.16/include/python3.7m
-        GmSSL-3.1.0/include
+        GmSSL/include
+        gmssl_pyx
 )
 link_directories(
         ~/.pyenv/versions/3.7.16/lib
-        GmSSL-3.1.0//build/bin
+        GmSSL//build/bin
 )
 link_libraries(python3.7m gmssl)
-add_library(gmssl_ext SHARED gmssl_pyx/gmsslmodule.c)
+add_library(gmssl_ext SHARED gmssl_pyx/gmsslmodule.c gmssl_pyx/gmsslext_sm9.c gmssl_pyx/gmsslext_sm9.h)

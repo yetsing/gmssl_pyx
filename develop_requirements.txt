@@ -1,3 +1,2 @@
 black
 pycryptodomex
-GmSSL @ git+https://github.com/guanzhi/GmSSL.git@v3.1.0
