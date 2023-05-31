@@ -9,8 +9,8 @@
 
 #define GMSSL_INNER_OK 1
 
-PyObject *GmsslInnerError;
+extern PyObject *GmsslInnerError;
 
-PyObject *InvalidValueError;
+extern PyObject *InvalidValueError;
 
 #endif //GMSSL_PYX_GMSSLEXT_H
