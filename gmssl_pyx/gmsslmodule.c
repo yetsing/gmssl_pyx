@@ -13,6 +13,10 @@
 #include "gmsslext_sm9.h"
 #include "gmsslext.h"
 
+PyObject *GmsslInnerError;
+
+PyObject *InvalidValueError;
+
 static PyObject *
 gmsslext_sm2_key_generate(PyObject *self, PyObject *Py_UNUSED(ignored)) {
     SM2_KEY sm2_key;
