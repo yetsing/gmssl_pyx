@@ -76,6 +76,14 @@ def compile_gmssl():
         with open(filename, "w", encoding=utf8) as f:
             f.write(text)
 
+        filename = "include/gmssl/rand.h"
+        with open(filename, "r", encoding=utf8) as f:
+            text = f.read()
+        text = text.replace("#include <gmssl/api.h>", "")
+        text = text.replace("_gmssl_export", "__declspec(dllexport)")
+        with open(filename, "w", encoding=utf8) as f:
+            f.write(text)
+
     # 3.编译静态库
     if os.path.exists("build"):
         # 删除之前的构建，重新生成
