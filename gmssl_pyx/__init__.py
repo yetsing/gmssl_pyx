@@ -18,6 +18,11 @@ from gmssl_pyx.gmsslext import (
     sm4_ctr_decrypt,
     sm4_gcm_encrypt,
     sm4_gcm_decrypt,
+    # SM9
+    SM9MasterKey,
+    SM9MasterPublicKey,
+    SM9PrivateKey,
+    rand_bytes,
     # exception
     GmsslInnerError,
     InvalidValueError,

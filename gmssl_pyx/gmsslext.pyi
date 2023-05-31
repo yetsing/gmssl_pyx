@@ -20,7 +20,7 @@ def sm2_encrypt(public_key: bytes, plaintext: bytes) -> bytes:
 
     Args:
         public_key: 64 字节的公钥
-        plaintext: 明文数据，长度范围为 [1, 255]
+        plaintext: 明文数据，1 <= 长度 <= 255
 
     Returns: 密文数据，编码格式为 ASN.1 DER ，模式为 C1C3C2
 
@@ -33,7 +33,7 @@ def sm2_decrypt(private_key: bytes, ciphertext: bytes) -> bytes:
 
     Args:
         private_key: 32 字节的私钥
-        ciphertext: 密文数据，长度范围为 [45, 366]，编码格式为 ASN.1 DER ，模式为 C1C3C2
+        ciphertext: 密文数据，45 <= 长度 <= 366 ，编码格式为 ASN.1 DER ，模式为 C1C3C2
 
     Returns: 明文数据
 
@@ -207,7 +207,7 @@ def sm4_gcm_encrypt(
 
     Args:
         key: 密钥
-        iv: 初始化向量，也被叫做 nonce ，长度为 [1, 64]
+        iv: 初始化向量，也被叫做 nonce ，1 <= 长度 <= 64
         aad: 附加数据，也被叫做 associated_data
         plaintext: 明文数据
 
@@ -222,7 +222,7 @@ def sm4_gcm_decrypt(
 
     Args:
         key: 密钥
-        iv: 初始化向量，也被叫做 nonce ，长度为 [1, 64]
+        iv: 初始化向量，也被叫做 nonce ，1 <= 长度 <= 64
         aad: 附加数据，也被叫做 associated_data
         ciphertext: 密文数据
         tag: 标签
@@ -230,3 +230,82 @@ def sm4_gcm_decrypt(
     Returns: 明文数据
     """
     ...
+
+def rand_bytes(n: int) -> bytes:
+    """生成 n 字节的随机字节数据
+
+    Args:
+        n: 字节数，范围为 [1, 256] ，包含 1 和 256
+
+    Returns: 随机字节数据
+    """
+    ...
+
+class SM9PrivateKey:
+    """SM9 私钥"""
+    @classmethod
+    def from_der(cls, data: bytes) -> "SM9PrivateKey":
+        """从 ASN.1 DER 编码的字节流生成私钥"""
+        ...
+
+    def to_der(self) -> bytes:
+        """将私钥生成 ASN.1 DER 编码"""
+        ...
+
+    def decrypt(self, identity: bytes, ciphertext: bytes) -> bytes:
+        """解密数据
+
+        Args:
+            identity: 用户标志
+            ciphertext: 密文数据， ASN.1 DER 编码，1 <= 长度 <= 367
+
+        Returns: 明文数据
+        """
+        ...
+
+class SM9MasterPublicKey:
+    """SM9 主公钥"""
+    @classmethod
+    def from_der(cls, data: bytes) -> "SM9MasterPublicKey":
+        """从 ASN.1 DER 编码的字节流生成公钥"""
+        ...
+
+    def to_der(self) -> bytes:
+        """将公钥生成 ASN.1 DER 编码"""
+        ...
+    def encrypt(self, identity: bytes, plaintext: bytes) -> bytes:
+        """加密数据
+
+        Args:
+            identity: 用户标志
+            plaintext: 明文数据，1 <= 长度 <= 255
+
+        Returns: 密文数据， ASN.1 DER 编码
+        """
+        ...
+
+class SM9MasterKey:
+    """SM9 主密钥"""
+
+    @classmethod
+    def generate(cls) -> "SM9MasterKey":
+        """生成随机的主密钥。
+
+        Returns: 主密钥
+        """
+        ...
+    def extract_key(self, identity: bytes) -> "SM9PrivateKey":
+        """根据用户标志生成私钥。
+
+        Args:
+            identity: 用户标志
+
+        Returns: 私钥
+        """
+        ...
+    def public_key(self) -> "SM9MasterPublicKey":
+        """返回主公钥。
+
+        Returns: 主公钥
+        """
+        ...

@@ -113,6 +113,7 @@ def create_extension():
         "gmssl_pyx.gmsslext",
         [
             "gmssl_pyx/gmsslmodule.c",
+            "gmssl_pyx/gmsslext_sm9.c",
         ],
         include_dirs=["./GmSSL/include"],
         library_dirs=library_dirs,

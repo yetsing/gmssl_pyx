@@ -8,24 +8,18 @@
 #include "gmssl/sm2.h"
 #include "gmssl/sm3.h"
 #include "gmssl/sm4.h"
+#include <gmssl/rand.h>
 
-#define GMSSL_INNER_OK 1
-
-static PyObject *GmsslInnerError;
-
-static PyObject *InvalidValueError;
+#include "gmsslext_sm9.h"
+#include "gmsslext.h"
 
 static PyObject *
-gmsslext_sm2_key_generate(PyObject *self, PyObject *args) {
+gmsslext_sm2_key_generate(PyObject *self, PyObject *Py_UNUSED(ignored)) {
     SM2_KEY sm2_key;
-    int ret, ok;
+    int ret;
 
     // sm2_key_generate() -> t.Tuple[bytes, bytes]
     // 函数没有参数
-    ok = PyArg_ParseTuple(args, "");
-    if (!ok) {
-        return NULL;
-    }
     ret = sm2_key_generate(&sm2_key);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm2_key_generate");
@@ -798,104 +792,138 @@ gmsslext_sm4_gcm_decrypt(PyObject *self, PyObject *args, PyObject *keywds) {
     return obj;
 }
 
+static PyObject *
+gmsslext_rand_bytes(PyObject *self, PyObject *args, PyObject *keywds) {
+    int ok, n, ret;
+    static char *kwlist[] = {"n", NULL};
+    ok = PyArg_ParseTupleAndKeywords(
+            args,
+            keywds,
+            "I",
+            kwlist,
+            &n);
+    if (!ok) {
+        return NULL;
+    }
+    // 256 是 rand_unix.c 的限制
+    if (n <= 0 || n > 256) {
+        PyErr_SetString(InvalidValueError, "n must in [1, 256]");
+        return NULL;
+    }
+    char *buf = PyMem_RawMalloc(n);
+    ret = rand_bytes((uint8_t *) buf, n);
+    if (ret != GMSSL_INNER_OK) {
+        PyErr_SetString(GmsslInnerError, "libgmssl inner error in rand_bytes");
+        return NULL;
+    }
+    PyObject *obj = Py_BuildValue("y#", buf, (Py_ssize_t) n);
+    PyMem_RawFree(buf);
+    return obj;
+}
 
 // 定义模块暴露的函数
 static PyMethodDef SpamMethods[] = {
         {
                 "sm2_key_generate",
                 gmsslext_sm2_key_generate,
-                METH_VARARGS,
+                METH_NOARGS,
                 "生成 SM2 公私密钥对",
         },
         {
                 "sm2_encrypt",
                 (PyCFunction) (void (*)(void)) gmsslext_sm2_encrypt,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM2 公钥加密",
+                        "SM2 公钥加密",
         },
         {
                 "sm2_decrypt",
                 (PyCFunction) (void (*)(void)) gmsslext_sm2_decrypt,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM2 私钥解密",
+                        "SM2 私钥解密",
         },
         {
                 "sm2_sign_sm3_digest",
                 (PyCFunction) (void (*)(void)) gmsslext_sm2_sign_sm3_digest,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM2 签名 SM3 摘要",
+                        "SM2 签名 SM3 摘要",
         },
         {
                 "sm2_verify_sm3_digest",
                 (PyCFunction) (void (*)(void)) gmsslext_sm2_verify_sm3_digest,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM2 验证 SM3 摘要和签名",
+                        "SM2 验证 SM3 摘要和签名",
         },
         {
                 "sm2_sign",
                 (PyCFunction) (void (*)(void)) gmsslext_sm2_sign,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM2 签名",
+                        "SM2 签名",
         },
         {
                 "sm2_verify",
                 (PyCFunction) (void (*)(void)) gmsslext_sm2_verify,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM2 验证签名",
+                        "SM2 验证签名",
         },
         {
                 "sm3_hash",
                 (PyCFunction) (void (*)(void)) gmsslext_sm3_hash,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM3 hash",
+                        "SM3 hash",
         },
         {
                 "sm3_hmac",
                 (PyCFunction) (void (*)(void)) gmsslext_sm3_hmac,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM3 hmac",
+                        "SM3 hmac",
         },
         {
                 "sm3_kdf",
                 (PyCFunction) (void (*)(void)) gmsslext_sm3_kdf,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM3 kdf",
+                        "SM3 kdf",
         },
         {
                 "sm4_cbc_padding_encrypt",
                 (PyCFunction) (void (*)(void)) gmsslext_sm4_cbc_padding_encrypt,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM3 cbc encrypt, use PKCS#7 padding",
+                        "SM3 cbc encrypt, use PKCS#7 padding",
         },
         {
                 "sm4_cbc_padding_decrypt",
                 (PyCFunction) (void (*)(void)) gmsslext_sm4_cbc_padding_decrypt,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM3 cbc decrypt, use PKCS#7 padding",
+                        "SM3 cbc decrypt, use PKCS#7 padding",
         },
         {
                 "sm4_ctr_encrypt",
                 (PyCFunction) (void (*)(void)) gmsslext_sm4_ctr_encrypt,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM3 ctr encrypt",
+                        "SM3 ctr encrypt",
         },
         {
                 "sm4_ctr_decrypt",
                 (PyCFunction) (void (*)(void)) gmsslext_sm4_ctr_decrypt,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM3 ctr decrypt",
+                        "SM3 ctr decrypt",
         },
         {
                 "sm4_gcm_encrypt",
                 (PyCFunction) (void (*)(void)) gmsslext_sm4_gcm_encrypt,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM3 gcm encrypt",
+                        "SM3 gcm encrypt",
         },
         {
                 "sm4_gcm_decrypt",
                 (PyCFunction) (void (*)(void)) gmsslext_sm4_gcm_decrypt,
                 METH_VARARGS | METH_KEYWORDS,
-                "SM3 gcm decrypt",
+                        "SM3 gcm decrypt",
+        },
+        {
+                "rand_bytes",
+                (PyCFunction) (void (*)(void)) gmsslext_rand_bytes,
+                METH_VARARGS | METH_KEYWORDS,
+                        "generate rand bytes",
         },
         {NULL, NULL, 0, NULL}        /* Sentinel */
 };
@@ -918,9 +946,55 @@ PyMODINIT_FUNC
 PyInit_gmsslext(void) {
     PyObject *m;
 
-    m = PyModule_Create(&spammodule);
-    if (m == NULL)
+    // create custom type
+    if (PyType_Ready(&CustomType) < 0) {
         return NULL;
+    }
+    if (PyType_Ready(&GmsslextSM9PrivateKeyType) < 0) {
+        return NULL;
+    }
+    if (PyType_Ready(&GmsslextSM9MasterPublicKeyType) < 0) {
+        return NULL;
+    }
+    if (PyType_Ready(&GmsslextSM9MasterKeyType) < 0) {
+        return NULL;
+    }
+
+    m = PyModule_Create(&spammodule);
+    if (m == NULL) {
+        return NULL;
+    }
+
+    Py_INCREF(&CustomType);
+    if (PyModule_AddObject(m, "Custom", (PyObject *) &CustomType) < 0) {
+        Py_DECREF(&CustomType);
+        Py_DECREF(m);
+        return NULL;
+    }
+    Py_INCREF(&GmsslextSM9PrivateKeyType);
+    if (PyModule_AddObject(m, "SM9PrivateKey", (PyObject *) &GmsslextSM9PrivateKeyType) < 0) {
+        Py_DECREF(&GmsslextSM9PrivateKeyType);
+        Py_DECREF(&CustomType);
+        Py_DECREF(m);
+        return NULL;
+    }
+    Py_INCREF(&GmsslextSM9MasterPublicKeyType);
+    if (PyModule_AddObject(m, "SM9MasterPublicKey", (PyObject *) &GmsslextSM9MasterPublicKeyType) < 0) {
+        Py_DECREF(&GmsslextSM9MasterPublicKeyType);
+        Py_DECREF(&GmsslextSM9PrivateKeyType);
+        Py_DECREF(&CustomType);
+        Py_DECREF(m);
+        return NULL;
+    }
+    Py_INCREF(&GmsslextSM9MasterKeyType);
+    if (PyModule_AddObject(m, "SM9MasterKey", (PyObject *) &GmsslextSM9MasterKeyType) < 0) {
+        Py_DECREF(&GmsslextSM9MasterKeyType);
+        Py_DECREF(&GmsslextSM9MasterPublicKeyType);
+        Py_DECREF(&GmsslextSM9PrivateKeyType);
+        Py_DECREF(&CustomType);
+        Py_DECREF(m);
+        return NULL;
+    }
 
     // 新建异常 gmssl.GmsslInnerError ，父类为 Exception
     GmsslInnerError = PyErr_NewException("gmsslext.GmsslInnerError", NULL, NULL);
@@ -928,6 +1002,7 @@ PyInit_gmsslext(void) {
     if (PyModule_AddObject(m, "GmsslInnerError", GmsslInnerError) < 0) {
         Py_XDECREF(GmsslInnerError);
         Py_CLEAR(GmsslInnerError);
+        Py_DECREF(&CustomType);
         Py_DECREF(m);
         return NULL;
     }
@@ -939,6 +1014,7 @@ PyInit_gmsslext(void) {
         Py_CLEAR(InvalidValueError);
         Py_XDECREF(GmsslInnerError);
         Py_CLEAR(GmsslInnerError);
+        Py_DECREF(&CustomType);
         Py_DECREF(m);
         return NULL;
     }

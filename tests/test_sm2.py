@@ -11,6 +11,7 @@ from gmssl_pyx import (
     sm2_sign,
     sm2_verify,
     normalize_sm2_public_key,
+    rand_bytes,
     GmsslInnerError,
     InvalidValueError,
 )
@@ -208,3 +209,12 @@ class SM2TestCase(unittest.TestCase):
             compressed_public_key = b"\x03" + raw_public_key[:32]
         k1 = normalize_sm2_public_key(compressed_public_key)
         self.assertEqual(k1, raw_public_key)
+
+    def test_randbytes(self):
+        for i in range(1, 257):
+            bs = rand_bytes(i)
+            self.assertEqual(len(bs), i)
+
+        with self.assertRaises(InvalidValueError) as cm:
+            rand_bytes(257)
+        self.assertEqual(str(cm.exception), "n must in [1, 256]")
