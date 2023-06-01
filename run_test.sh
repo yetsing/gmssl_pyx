@@ -9,4 +9,5 @@ fi
 set -ex
 
 # 运行测试
-python -m unittest discover -v tests
+#python -m unittest discover -v tests
+python test.py
