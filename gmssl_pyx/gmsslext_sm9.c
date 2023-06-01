@@ -451,6 +451,96 @@ SM9MasterKey_generate(PyTypeObject *type, PyObject *Py_UNUSED(args)) {
 }
 
 static PyObject *
+SM9MasterKey_from_der(PyTypeObject *type, PyObject *args, PyObject *keywds) {
+    int ok;
+    static char *kwlist[] = {"data", NULL};
+    const char *data;
+    Py_ssize_t data_length;
+
+    ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#", kwlist, &data, &data_length);
+    if (!ok) {
+        return NULL;
+    }
+
+    SM9MasterKeyObject *self = (SM9MasterKeyObject *) PyObject_CallFunctionObjArgs((PyObject *) type, NULL);
+    if (self == NULL) {
+        return NULL;
+    }
+    int ret = sm9_enc_master_key_from_der(&self->master, (const uint8_t **) &data, &data_length);
+    if (ret != GMSSL_INNER_OK) {
+        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_key_from_der");
+        return NULL;
+    }
+    return (PyObject *) self;
+}
+
+static PyObject *
+SM9MasterKey_to_der(SM9MasterKeyObject *self, PyObject *Py_UNUSED(args)) {
+    // code from sm9_enc_master_key_info_encrypt_to_der
+    uint8_t buf[256];
+    uint8_t *p = buf;
+    size_t len = 0;
+    int ret = sm9_enc_master_key_to_der(&self->master, &p, &len);
+    if (ret != GMSSL_INNER_OK) {
+        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_key_to_der");
+        return NULL;
+    }
+    // 这里不用 p ，因为 p 已经变了
+    return Py_BuildValue("y#", buf, (Py_ssize_t) len);
+}
+
+static PyObject *
+SM9MasterKey_decrypt_from_der(PyTypeObject *type, PyObject *args, PyObject *keywds) {
+    int ok;
+    static char *kwlist[] = {"password", "data", NULL};
+    const char *password;
+    Py_ssize_t password_length;
+    const char *data;
+    Py_ssize_t data_length;
+    // decrypt_from_der(cls, password: bytes, data: bytes) -> "SM9MasterKey"
+    ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#y#", kwlist, &password, &password_length, &data, &data_length);
+    if (!ok) {
+        return NULL;
+    }
+
+    SM9MasterKeyObject *self = (SM9MasterKeyObject *) PyObject_CallFunctionObjArgs((PyObject *) type, NULL);
+    if (self == NULL) {
+        return NULL;
+    }
+    int ret = sm9_enc_master_key_info_decrypt_from_der(&self->master, password, (const uint8_t **) &data, &data_length);
+    if (ret != GMSSL_INNER_OK) {
+        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_key_info_decrypt_from_der");
+        return NULL;
+    }
+    return (PyObject *) self;
+}
+
+static PyObject *
+SM9MasterKey_encrypt_to_der(SM9MasterKeyObject *self, PyObject *args, PyObject *keywds) {
+    int ok;
+    static char *kwlist[] = {"password", NULL};
+    const char *password;
+    Py_ssize_t password_length;
+    // decrypt_from_der(cls, password: bytes, data: bytes) -> "SM9MasterKey"
+    ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#", kwlist, &password, &password_length);
+    if (!ok) {
+        return NULL;
+    }
+
+    // code from sm9_enc_master_key_info_encrypt_to_pem
+    uint8_t buf[SM9_MAX_ENCED_PRIVATE_KEY_INFO_SIZE];
+    uint8_t *p = buf;
+    size_t len = 0;
+    int ret = sm9_enc_master_key_info_encrypt_to_der(&self->master, password, &p, &len);
+    if (ret != GMSSL_INNER_OK) {
+        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_key_info_encrypt_to_der");
+        return NULL;
+    }
+    // 这里不用 p ，因为 p 已经变了
+    return Py_BuildValue("y#", buf, (Py_ssize_t) len);
+}
+
+static PyObject *
 SM9MasterKey_extract_key(SM9MasterKeyObject *self, PyObject *args, PyObject *keywds) {
     int ok;
     static char *kwlist[] = {"identity", NULL};
@@ -514,6 +604,30 @@ static PyMethodDef SM9MasterKey_methods[] = {
                 (PyCFunction) SM9MasterKey_generate,
                 METH_NOARGS | METH_CLASS,
                 "Generate random master key",
+        },
+        {
+                "from_der",
+                (PyCFunction) SM9MasterKey_from_der,
+                METH_CLASS | METH_VARARGS | METH_KEYWORDS,
+                "Build master key from der",
+        },
+        {
+                "to_der",
+                (PyCFunction) SM9MasterKey_to_der,
+                METH_NOARGS,
+                "Export master key to der",
+        },
+        {
+                "decrypt_from_der",
+                (PyCFunction) SM9MasterKey_decrypt_from_der,
+                METH_CLASS | METH_VARARGS | METH_KEYWORDS,
+                "master key decrypt from der",
+        },
+        {
+                "encrypt_to_der",
+                (PyCFunction) SM9MasterKey_encrypt_to_der,
+                METH_VARARGS | METH_KEYWORDS,
+                "master key encrypt to der",
         },
         {
                 "extract_key",
