@@ -1,6 +1,6 @@
 import secrets
-from gmssl_pyx import sm3_hmac
 
+from gmssl_pyx import sm3_hmac
 
 key = secrets.token_bytes(32)
 message = b"sm3_hmac"

@@ -243,21 +243,20 @@ def rand_bytes(n: int) -> bytes:
 
 class SM9PrivateKey:
     """SM9 私钥"""
+
     @classmethod
     def from_der(cls, data: bytes) -> "SM9PrivateKey":
         """从 ASN.1 DER 编码的字节流生成私钥"""
         ...
-
     def to_der(self) -> bytes:
         """将私钥生成 ASN.1 DER 编码"""
         ...
-
     def decrypt(self, identity: bytes, ciphertext: bytes) -> bytes:
         """解密数据
 
         Args:
             identity: 用户标志
-            ciphertext: 密文数据， ASN.1 DER 编码，1 <= 长度 <= 367
+            ciphertext: 密文数据， ASN.1 DER 编码，长度 < 368
 
         Returns: 明文数据
         """
@@ -265,11 +264,11 @@ class SM9PrivateKey:
 
 class SM9MasterPublicKey:
     """SM9 主公钥"""
+
     @classmethod
     def from_der(cls, data: bytes) -> "SM9MasterPublicKey":
         """从 ASN.1 DER 编码的字节流生成公钥"""
         ...
-
     def to_der(self) -> bytes:
         """将公钥生成 ASN.1 DER 编码"""
         ...
@@ -278,7 +277,7 @@ class SM9MasterPublicKey:
 
         Args:
             identity: 用户标志
-            plaintext: 明文数据，1 <= 长度 <= 255
+            plaintext: 明文数据，长度 < 256
 
         Returns: 密文数据， ASN.1 DER 编码
         """

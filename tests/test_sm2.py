@@ -3,17 +3,17 @@ import secrets
 import unittest
 
 from gmssl_pyx import (
-    sm2_key_generate,
-    sm2_encrypt,
-    sm2_decrypt,
-    sm2_sign_sm3_digest,
-    sm2_verify_sm3_digest,
-    sm2_sign,
-    sm2_verify,
-    normalize_sm2_public_key,
-    rand_bytes,
     GmsslInnerError,
     InvalidValueError,
+    normalize_sm2_public_key,
+    rand_bytes,
+    sm2_decrypt,
+    sm2_encrypt,
+    sm2_key_generate,
+    sm2_sign,
+    sm2_sign_sm3_digest,
+    sm2_verify,
+    sm2_verify_sm3_digest,
 )
 
 

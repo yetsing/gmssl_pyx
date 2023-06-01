@@ -1,5 +1,4 @@
-from gmssl_pyx import sm2_key_generate, normalize_sm2_public_key
-
+from gmssl_pyx import normalize_sm2_public_key, sm2_key_generate
 
 raw_public_key, _ = sm2_key_generate()
 k1 = normalize_sm2_public_key(raw_public_key)

@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 import os
 import pathlib
-import sys
-import urllib.request
 import shutil
 import subprocess
+import sys
 import tarfile
+import urllib.request
 
+from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
-from setuptools import setup, Extension
-
 
 # 需要给所有文件读写操作都指定编码，避免 windows gbk 编码错误
 utf8 = "utf-8"

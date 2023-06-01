@@ -1,9 +1,10 @@
 import unittest
 
+
 def main():
     loader = unittest.defaultTestLoader
-    suite = loader.discover('tests')
-    runner = unittest.TextTestRunner()
+    suite = loader.discover("tests")
+    runner = unittest.TextTestRunner(verbosity=2)
     runner.run(suite)
 
 

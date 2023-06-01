@@ -1,11 +1,6 @@
 import secrets
-from gmssl_pyx import (
-    sm4_ctr_encrypt,
-    sm4_ctr_decrypt,
-    SM4_KEY_SIZE,
-    SM4_BLOCK_SIZE,
-)
 
+from gmssl_pyx import SM4_BLOCK_SIZE, SM4_KEY_SIZE, sm4_ctr_decrypt, sm4_ctr_encrypt
 
 key = secrets.token_bytes(SM4_KEY_SIZE)
 ctr = secrets.token_bytes(SM4_BLOCK_SIZE)

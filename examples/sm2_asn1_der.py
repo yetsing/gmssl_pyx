@@ -1,6 +1,6 @@
-from Cryptodome.Util.asn1 import DerSequence, DerOctetString, DerInteger
-from gmssl_pyx import sm2_key_generate, sm2_encrypt, sm2_decrypt, sm2_sign, sm2_verify
+from Cryptodome.Util.asn1 import DerInteger, DerOctetString, DerSequence
 
+from gmssl_pyx import sm2_decrypt, sm2_encrypt, sm2_key_generate, sm2_sign, sm2_verify
 
 # 生成 SM2 公私钥
 public_key, private_key = sm2_key_generate()

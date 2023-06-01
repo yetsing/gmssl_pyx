@@ -1,5 +1,6 @@
 import binascii
 import typing as t
+
 from gmssl_pyx.gmsslext import InvalidValueError
 
 g_default_ecc_table = {

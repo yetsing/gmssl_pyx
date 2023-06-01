@@ -1,6 +1,6 @@
 import secrets
-from gmssl_pyx import sm4_gcm_encrypt, sm4_gcm_decrypt, SM4_KEY_SIZE, SM4_BLOCK_SIZE
 
+from gmssl_pyx import SM4_BLOCK_SIZE, SM4_KEY_SIZE, sm4_gcm_decrypt, sm4_gcm_encrypt
 
 plaintext = b"hello world"
 key = secrets.token_bytes(SM4_KEY_SIZE)

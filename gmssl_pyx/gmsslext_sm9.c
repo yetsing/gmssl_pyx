@@ -168,7 +168,7 @@ SM9PrivateKey_from_der(PyTypeObject *type, PyObject *args) {
     if (self == NULL) {
         return NULL;
     }
-    ret = sm9_enc_key_from_der(&self->key, &data, &data_length);
+    ret = sm9_enc_key_from_der(&self->key, (const uint8_t **) &data, &data_length);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_key_from_der");
         return NULL;
@@ -204,8 +204,8 @@ SM9PrivateKey_decrypt(SM9PrivateKeyObject *self, PyObject *args, PyObject *keywd
     if (!ok) {
         return NULL;
     }
-    if (ciphertext_length < 1 || ciphertext_length > SM9_MAX_CIPHERTEXT_SIZE) {
-        PyErr_SetString(GmsslInnerError, "invalid sm9 ciphertext length.");
+    if (ciphertext_length > SM9_MAX_CIPHERTEXT_SIZE) {
+        PyErr_SetString(InvalidValueError, "invalid sm9 ciphertext length.");
         return NULL;
     }
 
@@ -345,11 +345,17 @@ SM9MasterPublicKey_encrypt(SM9MasterPublicKeyObject *self, PyObject *args, PyObj
         return NULL;
     }
 
+    if (plaintext_length > SM9_MAX_PLAINTEXT_SIZE) {
+        PyErr_SetString(InvalidValueError, "invalid plaintext length");
+        return NULL;
+    }
+
     int ret;
     char ciphertext[SM9_MAX_CIPHERTEXT_SIZE];
     Py_ssize_t ciphertext_length;
-    ret = sm9_encrypt(&self->master_public, identity, identity_length, (uint8_t *) plaintext, plaintext_length,
-                      ciphertext, &ciphertext_length);
+    ret = sm9_encrypt(&self->master_public, identity, identity_length,
+                      (uint8_t *) plaintext, plaintext_length,
+                      (uint8_t *) ciphertext, &ciphertext_length);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_encrypt");
         return NULL;

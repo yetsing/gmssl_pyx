@@ -1,6 +1,5 @@
 from gmssl_pyx import sm2_key_generate, sm2_sign, sm2_verify
 
-
 # 生成 SM2 公私钥
 public_key, private_key = sm2_key_generate()
 

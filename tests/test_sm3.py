@@ -3,12 +3,7 @@ import random
 import secrets
 import unittest
 
-from gmssl_pyx import (
-    sm3_hash,
-    sm3_hmac,
-    sm3_kdf,
-    InvalidValueError,
-)
+from gmssl_pyx import InvalidValueError, sm3_hash, sm3_hmac, sm3_kdf
 
 
 class SM3TestCase(unittest.TestCase):

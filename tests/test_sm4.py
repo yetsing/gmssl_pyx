@@ -3,15 +3,15 @@ import secrets
 import unittest
 
 from gmssl_pyx import (
-    sm4_cbc_padding_encrypt,
-    sm4_cbc_padding_decrypt,
-    sm4_ctr_encrypt,
-    sm4_ctr_decrypt,
-    sm4_gcm_encrypt,
-    sm4_gcm_decrypt,
-    SM4_KEY_SIZE,
     SM4_BLOCK_SIZE,
+    SM4_KEY_SIZE,
     InvalidValueError,
+    sm4_cbc_padding_decrypt,
+    sm4_cbc_padding_encrypt,
+    sm4_ctr_decrypt,
+    sm4_ctr_encrypt,
+    sm4_gcm_decrypt,
+    sm4_gcm_encrypt,
 )
 
 
