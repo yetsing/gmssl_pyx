@@ -30,3 +30,6 @@ import examples.sm4_ctr_encrypt_and_decrypt
 
 print("----------------sm4_gcm_encrypt_and_decrypt----------------")
 import examples.sm4_gcm_encrypt_and_decrypt
+
+print("----------------sm9_encrypt_and_decrypt----------------")
+import examples.sm9_encrypt_and_decrypt

@@ -145,7 +145,7 @@ print('verify', verify)
 
 如果公钥长度为 65 字节，那么第一个字节为 '\x04' ，表示后面的 64 字节就是公钥。
 
-如果公钥长度为 33 字节，那么第一个字节为 '\x02' 或者 '\x03' ， 
+如果公钥长度为 33 字节，那么第一个字节为 '\x02' 或者 '\x03' ，
 这是一种压缩格式，后面的 32 字节为整数 x ， y 可以根据 x 计算出来。
 
 私钥长度为 32 字节，没有其他变化。
@@ -283,3 +283,9 @@ plaintext = sm4_gcm_decrypt(key, iv=iv, aad=aad, ciphertext=ciphertext, tag=tag)
 print('plaintext', plaintext)
 
 ```
+
+## 其他
+
+[SM9](docs/sm9.md)
+
+如果要查看所有可用的 API ，可以看 [gmsslext.pyi](gmssl_pyx/gmsslext.pyi) 文件。
