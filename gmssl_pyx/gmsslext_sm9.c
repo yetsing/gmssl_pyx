@@ -6,6 +6,9 @@
 #include <Python.h>
 #include "structmember.h"
 
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "gmssl/sm9.h"
 
@@ -155,13 +158,14 @@ static PyMemberDef SM9PrivateKey_members[] = {
 };
 
 static PyObject *
-SM9PrivateKey_from_der(PyTypeObject *type, PyObject *args) {
+SM9PrivateKey_from_der(PyTypeObject *type, PyObject *args, PyObject *keywds) {
     const char *data;
     Py_ssize_t data_length;
+    static char *kwlist[] = {"data", NULL};
     int ret;
 
     // from_der(data: bytes) -> bytes
-    if (!PyArg_ParseTuple(args, "y#", &data, &data_length)) {
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "y#", kwlist, &data, &data_length)) {
         return NULL;
     }
     SM9PrivateKeyObject *self = (SM9PrivateKeyObject *) PyObject_CallFunctionObjArgs((PyObject *) type, NULL);
@@ -178,6 +182,7 @@ SM9PrivateKey_from_der(PyTypeObject *type, PyObject *args) {
 
 static PyObject *
 SM9PrivateKey_to_der(SM9PrivateKeyObject *self, PyObject *Py_UNUSED(ignored)) {
+    // to_der(self) -> bytes
     uint8_t buf[512];
     uint8_t *p = buf;
     size_t len = 0;
@@ -195,12 +200,11 @@ SM9PrivateKey_decrypt_from_der(PyTypeObject *type, PyObject *args, PyObject *key
     const char *data;
     Py_ssize_t data_length;
     const char *password;
-    Py_ssize_t password_length;
     static char *kwlist[] = {"password", "data", NULL};
     int ret;
 
     // decrypt_from_der(cls, password: bytes, data: bytes) -> "SM9PrivateKey"
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "y#y#", kwlist, &password, &password_length, &data, &data_length)) {
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "sy#", kwlist, &password, &data, &data_length)) {
         return NULL;
     }
     SM9PrivateKeyObject *self = (SM9PrivateKeyObject *) PyObject_CallFunctionObjArgs((PyObject *) type, NULL);
@@ -218,12 +222,11 @@ SM9PrivateKey_decrypt_from_der(PyTypeObject *type, PyObject *args, PyObject *key
 static PyObject *
 SM9PrivateKey_encrypt_to_der(SM9PrivateKeyObject *self, PyObject *args, PyObject *keywds) {
     const char *password;
-    Py_ssize_t password_length;
     static char *kwlist[] = {"password", NULL};
     int ret;
 
-    // decrypt_from_der(cls, password: bytes, data: bytes) -> "SM9PrivateKey"
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "y#", kwlist, &password, &password_length)) {
+    // encrypt_to_der(self, password: str) -> bytes
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &password)) {
         return NULL;
     }
     // code from sm9_enc_key_info_encrypt_to_pem
@@ -275,7 +278,7 @@ static PyMethodDef SM9PrivateKey_methods[] = {
         {
                 "from_der",
                 (PyCFunction) SM9PrivateKey_from_der,
-                METH_CLASS | METH_VARARGS,
+                METH_CLASS | METH_VARARGS | METH_KEYWORDS,
                 "sm9 private key from der",
         },
         {
@@ -355,13 +358,14 @@ static PyMemberDef SM9MasterPublicKey_members[] = {
 };
 
 static PyObject *
-SM9MasterPublicKey_from_der(PyTypeObject *type, PyObject *args) {
+SM9MasterPublicKey_from_der(PyTypeObject *type, PyObject *args, PyObject *keywds) {
     const char *data;
     Py_ssize_t data_length;
+    static char *kwlist[] = {"data", NULL};
     int ret;
 
     // from_der(cls, data: bytes) -> bytes
-    if (!PyArg_ParseTuple(args, "y#", &data, &data_length)) {
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "y#", kwlist, &data, &data_length)) {
         return NULL;
     }
     SM9MasterPublicKeyObject *self = (SM9MasterPublicKeyObject *) PyObject_CallFunctionObjArgs((PyObject *) type, NULL);
@@ -378,6 +382,7 @@ SM9MasterPublicKey_from_der(PyTypeObject *type, PyObject *args) {
 
 static PyObject *
 SM9MasterPublicKey_to_der(SM9MasterPublicKeyObject *self, PyObject *Py_UNUSED(ignored)) {
+    // to_der(self) -> bytes
     uint8_t buf[1024];
     uint8_t *p = buf;
     size_t len = 0;
@@ -399,6 +404,7 @@ SM9MasterPublicKey_encrypt(SM9MasterPublicKeyObject *self, PyObject *args, PyObj
     const char *plaintext;
     Py_ssize_t plaintext_length;
 
+    // encrypt(self, identity: bytes, plaintext: bytes) -> bytes
     ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#y#", kwlist, &identity, &identity_length, &plaintext,
                                      &plaintext_length);
     if (!ok) {
@@ -427,7 +433,7 @@ static PyMethodDef SM9MasterPublicKey_methods[] = {
         {
                 "from_der",
                 (PyCFunction) SM9MasterPublicKey_from_der,
-                METH_VARARGS | METH_CLASS,
+                METH_CLASS | METH_VARARGS | METH_KEYWORDS,
                 "public key from der",
         },
         {
@@ -517,6 +523,7 @@ SM9MasterKey_from_der(PyTypeObject *type, PyObject *args, PyObject *keywds) {
     const char *data;
     Py_ssize_t data_length;
 
+    // from_der(cls, data: bytes) -> "SM9MasterKey"
     ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#", kwlist, &data, &data_length);
     if (!ok) {
         return NULL;
@@ -536,6 +543,7 @@ SM9MasterKey_from_der(PyTypeObject *type, PyObject *args, PyObject *keywds) {
 
 static PyObject *
 SM9MasterKey_to_der(SM9MasterKeyObject *self, PyObject *Py_UNUSED(args)) {
+    // to_der(self) -> bytes
     // code from sm9_enc_master_key_info_encrypt_to_der
     uint8_t buf[256];
     uint8_t *p = buf;
@@ -554,11 +562,10 @@ SM9MasterKey_decrypt_from_der(PyTypeObject *type, PyObject *args, PyObject *keyw
     int ok;
     static char *kwlist[] = {"password", "data", NULL};
     const char *password;
-    Py_ssize_t password_length;
     const char *data;
     Py_ssize_t data_length;
     // decrypt_from_der(cls, password: bytes, data: bytes) -> "SM9MasterKey"
-    ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#y#", kwlist, &password, &password_length, &data, &data_length);
+    ok = PyArg_ParseTupleAndKeywords(args, keywds, "sy#", kwlist, &password, &data, &data_length);
     if (!ok) {
         return NULL;
     }
@@ -580,9 +587,8 @@ SM9MasterKey_encrypt_to_der(SM9MasterKeyObject *self, PyObject *args, PyObject *
     int ok;
     static char *kwlist[] = {"password", NULL};
     const char *password;
-    Py_ssize_t password_length;
-    // decrypt_from_der(cls, password: bytes, data: bytes) -> "SM9MasterKey"
-    ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#", kwlist, &password, &password_length);
+    // encrypt_to_der(self, password: str) -> bytes
+    ok = PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &password);
     if (!ok) {
         return NULL;
     }
@@ -601,12 +607,69 @@ SM9MasterKey_encrypt_to_der(SM9MasterKeyObject *self, PyObject *args, PyObject *
 }
 
 static PyObject *
+SM9MasterKey_decrypt_from_pem(PyTypeObject *type, PyObject *args, PyObject *keywds) {
+    static char *kwlist[] = {"password", "filepath", NULL};
+    const char *password;
+    const char *filepath;
+    // decrypt_from_pem(cls, password: str, filepath: str) -> "SM9MasterKey"
+    int ok = PyArg_ParseTupleAndKeywords(args, keywds, "ss", kwlist, &password, &filepath);
+    if (!ok) {
+        return NULL;
+    }
+
+    SM9MasterKeyObject *self = (SM9MasterKeyObject *) PyObject_CallFunctionObjArgs((PyObject *) type, NULL);
+    if (self == NULL) {
+        return NULL;
+    }
+    FILE *fp = fopen(filepath, "r");
+    if (fp == NULL) {
+        PyErr_SetString(InvalidValueError, strerror(errno));
+        return NULL;
+    }
+    int ret = sm9_enc_master_key_info_decrypt_from_pem(&self->master, password, fp);
+    if (ret != GMSSL_INNER_OK) {
+        fclose(fp);
+        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_key_info_decrypt_from_pem");
+        return NULL;
+    }
+    fclose(fp);
+    return (PyObject *) self;
+}
+
+static PyObject *
+SM9MasterKey_encrypt_to_pem(SM9MasterKeyObject *self, PyObject *args, PyObject *keywds) {
+    static char *kwlist[] = {"password", "filepath", NULL};
+    const char *password;
+    const char *filepath;
+    // encrypt_to_pem(self, password: str, filepath: str) -> "SM9MasterKey"
+    int ok = PyArg_ParseTupleAndKeywords(args, keywds, "ss", kwlist, &password, &filepath);
+    if (!ok) {
+        return NULL;
+    }
+
+    FILE *fp = fopen(filepath, "w");
+    if (fp == NULL) {
+        PyErr_SetString(InvalidValueError, strerror(errno));
+        return NULL;
+    }
+    int ret = sm9_enc_master_key_info_encrypt_to_pem(&self->master, password, fp);
+    if (ret != GMSSL_INNER_OK) {
+        fclose(fp);
+        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_key_info_encrypt_to_pem");
+        return NULL;
+    }
+    fclose(fp);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
 SM9MasterKey_extract_key(SM9MasterKeyObject *self, PyObject *args, PyObject *keywds) {
     int ok;
     static char *kwlist[] = {"identity", NULL};
     const char *identity;
     Py_ssize_t identity_length;
 
+    // extract_key(self, identity: bytes) -> "SM9PrivateKey"
     ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#", kwlist, &identity, &identity_length);
     if (!ok) {
         return NULL;
@@ -631,6 +694,7 @@ SM9MasterKey_extract_key(SM9MasterKeyObject *self, PyObject *args, PyObject *key
 
 static PyObject *
 SM9MasterKey_public_key(SM9MasterKeyObject *self, PyObject *Py_UNUSED(ignored)) {
+    // public_key(self) -> "SM9MasterPublicKey"
     uint8_t buf[512];
     uint8_t *p = buf;
     const uint8_t *cp = buf;
@@ -641,12 +705,6 @@ SM9MasterKey_public_key(SM9MasterKeyObject *self, PyObject *Py_UNUSED(ignored)) 
         PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_public_key_to_der");
         return NULL;
     }
-    SM9_ENC_MASTER_KEY master_public;
-    ret = sm9_enc_master_public_key_from_der(&master_public, &cp, &len);
-    if (ret != GMSSL_INNER_OK) {
-        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_public_key_from_der");
-        return NULL;
-    }
 
     SM9MasterPublicKeyObject *public_key;
     public_key = (SM9MasterPublicKeyObject *) PyObject_CallFunctionObjArgs(
@@ -654,7 +712,13 @@ SM9MasterKey_public_key(SM9MasterKeyObject *self, PyObject *Py_UNUSED(ignored)) 
     if (public_key == NULL) {
         return NULL;
     }
-    memcpy(&public_key->master_public, &master_public, sizeof(SM9_ENC_MASTER_KEY));
+
+    ret = sm9_enc_master_public_key_from_der(&public_key->master_public, &cp, &len);
+    if (ret != GMSSL_INNER_OK) {
+        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_public_key_from_der");
+        return NULL;
+    }
+
     return (PyObject *) public_key;
 }
 
@@ -688,6 +752,18 @@ static PyMethodDef SM9MasterKey_methods[] = {
                 (PyCFunction) SM9MasterKey_encrypt_to_der,
                 METH_VARARGS | METH_KEYWORDS,
                 "master key encrypt to der",
+        },
+        {
+                "decrypt_from_pem",
+                (PyCFunction) SM9MasterKey_decrypt_from_pem,
+                METH_CLASS | METH_VARARGS | METH_KEYWORDS,
+                "master key decrypt from pem",
+        },
+        {
+                "encrypt_to_pem",
+                (PyCFunction) SM9MasterKey_encrypt_to_pem,
+                METH_VARARGS | METH_KEYWORDS,
+                "master key encrypt to pem",
         },
         {
                 "extract_key",
