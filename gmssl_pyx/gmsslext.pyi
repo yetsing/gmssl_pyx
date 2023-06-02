@@ -251,6 +251,13 @@ class SM9PrivateKey:
     def to_der(self) -> bytes:
         """将私钥转化为 ASN.1 DER 编码字节数据"""
         ...
+    @classmethod
+    def decrypt_from_der(cls, password: bytes, data: bytes) -> "SM9PrivateKey":
+        """从加密的 ASN.1 DER 编码的字节数据生成私钥"""
+        ...
+    def encrypt_to_der(self) -> bytes:
+        """将私钥转化为加密的 ASN.1 DER 编码字节数据"""
+        ...
     def decrypt(self, identity: bytes, ciphertext: bytes) -> bytes:
         """解密数据
 
