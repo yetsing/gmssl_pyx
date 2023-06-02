@@ -242,6 +242,58 @@ SM9PrivateKey_encrypt_to_der(SM9PrivateKeyObject *self, PyObject *args, PyObject
 }
 
 static PyObject *
+SM9PrivateKey_decrypt_from_pem(PyTypeObject *type, PyObject *args, PyObject *keywds) {
+    const char *password;
+    const char *filepath;
+    static char *kwlist[] = {"password", "filepath", NULL};
+    int ret;
+
+    // decrypt_from_pem(cls, password: str, filepath: str) -> "SM9PrivateKey"
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss", kwlist, &password, &filepath)) {
+        return NULL;
+    }
+    SM9PrivateKeyObject *self = (SM9PrivateKeyObject *) PyObject_CallFunctionObjArgs((PyObject *) type, NULL);
+    if (self == NULL) {
+        return NULL;
+    }
+    FILE *fp = fopen(filepath, "r");
+    if (fp == NULL) {
+        PyErr_SetString(InvalidValueError, strerror(errno));
+        return NULL;
+    }
+    ret = sm9_enc_key_info_decrypt_from_pem(&self->key, password, fp);
+    if (ret != GMSSL_INNER_OK) {
+        fclose(fp);
+        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_key_info_decrypt_from_pem");
+        return NULL;
+    }
+    fclose(fp);
+    return (PyObject *) self;
+}
+
+static PyObject *
+SM9PrivateKey_encrypt_to_pem(SM9PrivateKeyObject *self, PyObject *args, PyObject *keywds) {
+    const char *password;
+    const char *filepath;
+    static char *kwlist[] = {"password", "filepath", NULL};
+    int ret;
+
+    // decrypt_from_pem(cls, password: str, filepath: str) -> "SM9PrivateKey"
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss", kwlist, &password, &filepath)) {
+        return NULL;
+    }
+    FILE *fp = fopen(filepath, "w");
+    ret = sm9_enc_key_info_encrypt_to_pem(&self->key, password, fp);
+    if (ret != GMSSL_INNER_OK) {
+        fclose(fp);
+        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_key_info_encrypt_to_pem");
+        return NULL;
+    }
+    fclose(fp);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
 SM9PrivateKey_decrypt(SM9PrivateKeyObject *self, PyObject *args, PyObject *keywds) {
     int ok;
     const char *identity;
@@ -298,6 +350,18 @@ static PyMethodDef SM9PrivateKey_methods[] = {
                 (PyCFunction) SM9PrivateKey_encrypt_to_der,
                 METH_VARARGS | METH_KEYWORDS,
                 "sm9 private key encrypt to der",
+        },
+        {
+                "decrypt_from_pem",
+                (PyCFunction) SM9PrivateKey_decrypt_from_pem,
+                METH_CLASS | METH_VARARGS | METH_KEYWORDS,
+                "sm9 private key decrypt from pem",
+        },
+        {
+                "encrypt_to_pem",
+                (PyCFunction) SM9PrivateKey_encrypt_to_pem,
+                METH_VARARGS | METH_KEYWORDS,
+                "sm9 private key encrypt to pem",
         },
         {
                 "decrypt",
@@ -364,7 +428,7 @@ SM9MasterPublicKey_from_der(PyTypeObject *type, PyObject *args, PyObject *keywds
     static char *kwlist[] = {"data", NULL};
     int ret;
 
-    // from_der(cls, data: bytes) -> bytes
+    // from_der(cls, data: bytes) -> "SM9MasterPublicKey"
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "y#", kwlist, &data, &data_length)) {
         return NULL;
     }
@@ -393,6 +457,59 @@ SM9MasterPublicKey_to_der(SM9MasterPublicKeyObject *self, PyObject *Py_UNUSED(ig
         return NULL;
     }
     return Py_BuildValue("y#", (char *) buf, (Py_ssize_t) len);
+}
+
+static PyObject *
+SM9MasterPublicKey_from_pem(PyTypeObject *type, PyObject *args, PyObject *keywds) {
+    const char *filepath;
+    static char *kwlist[] = {"filepath", NULL};
+
+    // from_pem(cls, filepath: str) -> "SM9MasterPublicKey"
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &filepath)) {
+        return NULL;
+    }
+    SM9MasterPublicKeyObject *self = (SM9MasterPublicKeyObject *) PyObject_CallFunctionObjArgs((PyObject *) type, NULL);
+    if (self == NULL) {
+        return NULL;
+    }
+
+    FILE *fp = fopen(filepath, "r");
+    if (fp == NULL) {
+        PyErr_SetString(InvalidValueError, strerror(errno));
+        return NULL;
+    }
+    int ret = sm9_enc_master_public_key_from_pem(&self->master_public, fp);
+    if (ret != GMSSL_INNER_OK) {
+        fclose(fp);
+        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_public_key_from_pem");
+        return NULL;
+    }
+    fclose(fp);
+    return (PyObject *) self;
+}
+
+static PyObject *
+SM9MasterPublicKey_to_pem(SM9MasterPublicKeyObject *self, PyObject *args, PyObject *keywds) {
+    const char *filepath;
+    static char *kwlist[] = {"filepath", NULL};
+
+    // to_pem(self, filepath: str) -> None
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &filepath)) {
+        return NULL;
+    }
+    FILE *fp = fopen(filepath, "w");
+    if (fp == NULL) {
+        PyErr_SetString(InvalidValueError, strerror(errno));
+        return NULL;
+    }
+    int ret = sm9_enc_master_public_key_to_pem(&self->master_public, fp);
+    if (ret != GMSSL_INNER_OK) {
+        fclose(fp);
+        PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_public_key_to_pem");
+        return NULL;
+    }
+    fclose(fp);
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -441,6 +558,18 @@ static PyMethodDef SM9MasterPublicKey_methods[] = {
                 (PyCFunction) SM9MasterPublicKey_to_der,
                 METH_NOARGS,
                 "public key to der",
+        },
+        {
+                "from_pem",
+                (PyCFunction) SM9MasterPublicKey_from_pem,
+                METH_CLASS | METH_VARARGS | METH_KEYWORDS,
+                "public key from pem",
+        },
+        {
+                "to_pem",
+                (PyCFunction) SM9MasterPublicKey_to_pem,
+                METH_VARARGS | METH_KEYWORDS,
+                "public key to pem",
         },
         {
                 "encrypt",
