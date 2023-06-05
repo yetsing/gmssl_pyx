@@ -308,7 +308,7 @@ SM9PrivateKey_decrypt(SM9PrivateKeyObject *self, PyObject *args, PyObject *keywd
         return NULL;
     }
     if (ciphertext_length > SM9_MAX_CIPHERTEXT_SIZE) {
-        PyErr_SetString(InvalidValueError, "invalid sm9 ciphertext length.");
+        PyErr_SetString(InvalidValueError, "invalid sm9 ciphertext length");
         return NULL;
     }
 
@@ -529,7 +529,7 @@ SM9MasterPublicKey_encrypt(SM9MasterPublicKeyObject *self, PyObject *args, PyObj
     }
 
     if (plaintext_length > SM9_MAX_PLAINTEXT_SIZE) {
-        PyErr_SetString(InvalidValueError, "invalid plaintext length");
+        PyErr_SetString(InvalidValueError, "invalid sm9 plaintext length");
         return NULL;
     }
 
