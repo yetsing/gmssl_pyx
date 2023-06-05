@@ -23,8 +23,8 @@ class SM9CipherTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         super().tearDown()
-        self.tempdir.cleanup()
         os.chdir(self.cwd)
+        self.tempdir.cleanup()
 
     def test_sm9_encrypt_and_decrypt(self):
         identity = secrets.token_bytes(6)

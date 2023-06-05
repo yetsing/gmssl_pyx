@@ -283,6 +283,10 @@ SM9PrivateKey_encrypt_to_pem(SM9PrivateKeyObject *self, PyObject *args, PyObject
         return NULL;
     }
     FILE *fp = fopen(filepath, "w");
+    if (fp == NULL) {
+        PyErr_SetString(InvalidValueError, strerror(errno));
+        return NULL;
+    }
     ret = sm9_enc_key_info_encrypt_to_pem(&self->key, password, fp);
     if (ret != GMSSL_INNER_OK) {
         fclose(fp);
