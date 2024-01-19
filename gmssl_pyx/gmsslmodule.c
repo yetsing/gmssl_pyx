@@ -276,8 +276,6 @@ gmsslext_sm2_sign(PyObject *self, PyObject *args, PyObject *keywds) {
 
 static PyObject *
 gmsslext_sm2_verify(PyObject *self, PyObject *args, PyObject *keywds) {
-    const char *private_key;
-    Py_ssize_t private_key_length;
     const char *public_key;
     Py_ssize_t public_key_length;
     const char *message;
@@ -285,19 +283,18 @@ gmsslext_sm2_verify(PyObject *self, PyObject *args, PyObject *keywds) {
     const char *signature;
     Py_ssize_t signature_length;
     PyObject *signer_id_obj = NULL;
-    static char *kwlist[] = {"private_key", "public_key", "message", "signature", "signer_id", NULL};
+    static char *kwlist[] = {"public_key", "message", "signature", "signer_id", NULL};
     int ret, ok;
 
     //  sm2_verify(
-    //      private_key: bytes, public_key: bytes,
+    //      public_key: bytes,
     //      message: bytes, signature: bytes,
     //      signer_id: t.Optional[bytes] = b'1234567812345678') -> bool
     ok = PyArg_ParseTupleAndKeywords(
             args,
             keywds,
-            "y#y#y#y#|O",
+            "y#y#y#|O",
             kwlist,
-            &private_key, &private_key_length,
             &public_key, &public_key_length,
             &message, &message_length,
             &signature, &signature_length,
@@ -324,8 +321,8 @@ gmsslext_sm2_verify(PyObject *self, PyObject *args, PyObject *keywds) {
             return NULL;
         }
     }
-    if (public_key_length != 64 || private_key_length != 32) {
-        PyErr_SetString(InvalidValueError, "invalid public_key or private_key");
+    if (public_key_length != 64) {
+        PyErr_SetString(InvalidValueError, "invalid public_key");
         return NULL;
     }
     if (signature_length <= 0) {
@@ -342,11 +339,6 @@ gmsslext_sm2_verify(PyObject *self, PyObject *args, PyObject *keywds) {
     ret = sm2_key_set_public_key(&sm2_key, (SM2_POINT *) public_key);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(InvalidValueError, "invalid public_key");
-        return NULL;
-    }
-    ret = sm2_key_set_private_key(&sm2_key, (uint8_t *) private_key);
-    if (ret != GMSSL_INNER_OK) {
-        PyErr_SetString(InvalidValueError, "invalid private_key");
         return NULL;
     }
     ret = sm2_verify_init(&sign_ctx, &sm2_key, signer_id, signer_id_length);

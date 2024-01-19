@@ -13,3 +13,4 @@ set -ex
 # 运行测试
 #python -m unittest discover -v tests
 python test.py
+python run_example.py

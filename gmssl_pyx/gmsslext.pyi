@@ -90,7 +90,6 @@ def sm2_sign(
     ...
 
 def sm2_verify(
-    private_key: bytes,
     public_key: bytes,
     message: bytes,
     signature: bytes,
@@ -99,7 +98,6 @@ def sm2_verify(
     """使用 SM2 验证消息数据的签名，包含 SM3 杂凑值 z
 
     Args:
-        private_key: 32 字节的私钥
         public_key: 64 字节的公钥
         message: 消息数据
         signature: 签名数据，编码格式为 ASN.1 DER ，模式为 rs

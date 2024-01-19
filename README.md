@@ -1,6 +1,6 @@
 # gmssl_pyx
 
-python wrapper of [GmSSL](https://github.com/guanzhi/GmSSL)
+python wrapper (C extension) of [GmSSL](https://github.com/guanzhi/GmSSL)
 
 使用的版本是 [GmSSL-3.1.0](https://github.com/guanzhi/GmSSL/releases/tag/v3.1.0)
 
@@ -47,14 +47,14 @@ message = b"hello world"
 signature = sm2_sign(private_key, public_key, message, signer_id=None)
 print("signature", signature)
 # 验证签名
-verify = sm2_verify(private_key, public_key, message, signature, signer_id=None)
+verify = sm2_verify(public_key, message, signature, signer_id=None)
 print("verify", verify)
 
 # 默认 signer_id 和 SM3 杂凑值 z
 signature = sm2_sign(private_key, public_key, message)
 print("signature", signature)
 # 验证签名
-verify = sm2_verify(private_key, public_key, message, signature)
+verify = sm2_verify(public_key, message, signature)
 print("verify", verify)
 
 # 自定义 signer_id 和 SM3 杂凑值 z
@@ -62,7 +62,7 @@ signer_id = b"signer_id"
 signature = sm2_sign(private_key, public_key, message, signer_id=signer_id)
 print("signature", signature)
 # 验证签名
-verify = sm2_verify(private_key, public_key, message, signature, signer_id=signer_id)
+verify = sm2_verify(public_key, message, signature, signer_id=signer_id)
 print("verify", verify)
 ```
 
