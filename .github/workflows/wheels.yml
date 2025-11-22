@@ -53,17 +53,6 @@ jobs:
             python: 310
             platform_id: macosx_x86_64
 
-          # MacOS arm64
-          - os: macos-14
-            python: 38
-            platform_id: macosx_arm64
-          - os: macos-14
-            python: 39
-            platform_id: macosx_arm64
-          - os: macos-14
-            python: 310
-            platform_id: macosx_arm64
-
     steps:
       - uses: actions/checkout@v5
         with:
