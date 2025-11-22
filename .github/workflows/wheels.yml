@@ -18,12 +18,7 @@ jobs:
       matrix:
         include:
           # Window 64 bit
-          # Note: windows-2019 is needed for older Python versions:
-          # https://github.com/scikit-learn/scikit-learn/issues/22530
-          - os: windows-2019
-            python: 37
-            platform_id: win_amd64
-          - os: windows-2019
+          - os: windows-2022
             python: 38
             platform_id: win_amd64
           - os: windows-latest
@@ -31,14 +26,13 @@ jobs:
             platform_id: win_amd64
           - os: windows-latest
             python: 310
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 311
             platform_id: win_amd64
 
           # Linux 64 bit manylinux
           - os: ubuntu-20.04
-            python: 37
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux1
-          - os: ubuntu-20.04
             python: 38
             platform_id: manylinux_x86_64
             manylinux_image: manylinux1
@@ -48,25 +42,43 @@ jobs:
             manylinux_image: manylinux1
           - os: ubuntu-20.04
             python: 310
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux1
+          - os: ubuntu-latest
+            python: 311
             platform_id: manylinux_x86_64
             manylinux_image: manylinux1
 
           # MacOS x86_64
-          - os: macos-11
-            python: 37
-            platform_id: macosx_x86_64
-          - os: macos-11
+          - os: macos-15-intel
             python: 38
             platform_id: macosx_x86_64
-          - os: macos-latest
+          - os: macos-15-intel
             python: 39
             platform_id: macosx_x86_64
-          - os: macos-latest
+          - os: macos-15-intel
             python: 310
             platform_id: macosx_x86_64
+          - os: macos-15-intel
+            python: 311
+            platform_id: macosx_x86_64
+
+          # MacOS arm64
+          - os: macos-14
+            python: 38
+            platform_id: macosx_arm64
+          - os: macos-14
+            python: 39
+            platform_id: macosx_arm64
+          - os: macos-14
+            python: 310
+            platform_id: macosx_arm64
+          - os: macos-14
+            python: 311
+            platform_id: macosx_arm64
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
