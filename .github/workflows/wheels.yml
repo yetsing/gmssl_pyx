@@ -32,15 +32,15 @@ jobs:
           - os: ubuntu-20.04
             python: 38
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux1
+            manylinux_image: manylinux2010
           - os: ubuntu-20.04
             python: 39
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux1
+            manylinux_image: manylinux2010
           - os: ubuntu-20.04
             python: 310
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux1
+            manylinux_image: manylinux2010
 
           # MacOS x86_64
           - os: macos-15-intel
