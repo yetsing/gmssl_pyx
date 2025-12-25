@@ -172,7 +172,8 @@ SM9PrivateKey_from_der(PyTypeObject *type, PyObject *args, PyObject *keywds) {
     if (self == NULL) {
         return NULL;
     }
-    ret = sm9_enc_key_from_der(&self->key, (const uint8_t **) &data, &data_length);
+    size_t c_data_length = (size_t) data_length;
+    ret = sm9_enc_key_from_der(&self->key, (const uint8_t **) &data, &c_data_length);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_key_from_der");
         return NULL;
@@ -211,7 +212,8 @@ SM9PrivateKey_decrypt_from_der(PyTypeObject *type, PyObject *args, PyObject *key
     if (self == NULL) {
         return NULL;
     }
-    ret = sm9_enc_key_info_decrypt_from_der(&self->key, password, (const uint8_t **) &data, &data_length);
+    size_t c_data_length = (size_t) data_length;
+    ret = sm9_enc_key_info_decrypt_from_der(&self->key, password, (const uint8_t **) &data, &c_data_length);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_key_info_decrypt_from_der");
         return NULL;
@@ -318,16 +320,16 @@ SM9PrivateKey_decrypt(SM9PrivateKeyObject *self, PyObject *args, PyObject *keywd
 
     int ret;
     char plaintext[SM9_MAX_PLAINTEXT_SIZE];
-    Py_ssize_t plaintext_length;
+    size_t c_plaintext_length;
     ret = sm9_decrypt(&self->key,
                       identity, identity_length,
                       (uint8_t *) ciphertext, ciphertext_length,
-                      (uint8_t *) plaintext, &plaintext_length);
+                      (uint8_t *) plaintext, &c_plaintext_length);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_decrypt");
         return NULL;
     }
-    return Py_BuildValue("y#", plaintext, plaintext_length);
+    return Py_BuildValue("y#", plaintext, (Py_ssize_t) c_plaintext_length);
 }
 
 static PyMethodDef SM9PrivateKey_methods[] = {
@@ -440,7 +442,8 @@ SM9MasterPublicKey_from_der(PyTypeObject *type, PyObject *args, PyObject *keywds
     if (self == NULL) {
         return NULL;
     }
-    ret = sm9_enc_master_public_key_from_der(&self->master_public, &data, &data_length);
+    size_t c_data_length = (size_t) data_length;
+    ret = sm9_enc_master_public_key_from_der(&self->master_public, (const uint8_t **)&data, &c_data_length);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_public_key_from_der");
         return NULL;
@@ -539,15 +542,15 @@ SM9MasterPublicKey_encrypt(SM9MasterPublicKeyObject *self, PyObject *args, PyObj
 
     int ret;
     char ciphertext[SM9_MAX_CIPHERTEXT_SIZE];
-    Py_ssize_t ciphertext_length;
+    size_t c_ciphertext_length;
     ret = sm9_encrypt(&self->master_public, identity, identity_length,
                       (uint8_t *) plaintext, plaintext_length,
-                      (uint8_t *) ciphertext, &ciphertext_length);
+                      (uint8_t *) ciphertext, &c_ciphertext_length);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_encrypt");
         return NULL;
     }
-    return Py_BuildValue("y#", ciphertext, ciphertext_length);
+    return Py_BuildValue("y#", ciphertext, (Py_ssize_t) c_ciphertext_length);
 }
 
 static PyMethodDef SM9MasterPublicKey_methods[] = {
@@ -666,7 +669,8 @@ SM9MasterKey_from_der(PyTypeObject *type, PyObject *args, PyObject *keywds) {
     if (self == NULL) {
         return NULL;
     }
-    int ret = sm9_enc_master_key_from_der(&self->master, (const uint8_t **) &data, &data_length);
+    size_t c_data_length = (size_t) data_length;
+    int ret = sm9_enc_master_key_from_der(&self->master, (const uint8_t **) &data, &c_data_length);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_key_from_der");
         return NULL;
@@ -707,7 +711,8 @@ SM9MasterKey_decrypt_from_der(PyTypeObject *type, PyObject *args, PyObject *keyw
     if (self == NULL) {
         return NULL;
     }
-    int ret = sm9_enc_master_key_info_decrypt_from_der(&self->master, password, (const uint8_t **) &data, &data_length);
+    size_t c_data_length = (size_t) data_length;
+    int ret = sm9_enc_master_key_info_decrypt_from_der(&self->master, password, (const uint8_t **) &data, &c_data_length);
     if (ret != GMSSL_INNER_OK) {
         PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm9_enc_master_key_info_decrypt_from_der");
         return NULL;

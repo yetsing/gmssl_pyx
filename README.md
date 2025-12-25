@@ -78,7 +78,7 @@ pip install pycryptodomex
 
 ```python
 from Cryptodome.Util.asn1 import DerSequence, DerOctetString, DerInteger
-from gmssl_pyx import sm2_key_generate, sm2_encrypt, sm2_decrypt
+from gmssl_pyx import sm2_key_generate, sm2_encrypt, sm2_decrypt, sm2_sign, sm2_verify
 
 
 # 生成 SM2 公私钥
@@ -118,6 +118,7 @@ plaintext = sm2_decrypt(private_key, ciphertext)
 print("plaintext", plaintext)
 
 # 签名
+message = b"This is a message"
 signature = sm2_sign(private_key, public_key, message)
 seq_der = DerSequence()
 decoded_sign = seq_der.decode(signature)
@@ -135,7 +136,7 @@ seq_der = DerSequence()
 seq_der.append(DerInteger(r))
 seq_der.append(DerInteger(s))
 signature = seq_der.encode()
-verify = sm2_verify(private_key, public_key, message, signature)
+verify = sm2_verify(public_key, message, signature)
 print('verify', verify)
 ```
 

@@ -246,9 +246,11 @@ class SM9PrivateKey:
     def from_der(cls, data: bytes) -> "SM9PrivateKey":
         """从 ASN.1 DER 编码的字节数据生成私钥"""
         ...
+
     def to_der(self) -> bytes:
         """将私钥转化为 ASN.1 DER 编码字节数据"""
         ...
+
     @classmethod
     def decrypt_from_der(cls, password: str, data: bytes) -> "SM9PrivateKey":
         """从加密的 ASN.1 DER 编码的字节数据生成私钥
@@ -260,16 +262,20 @@ class SM9PrivateKey:
         Return: 私钥
         """
         ...
+
     def encrypt_to_der(self, password: str) -> bytes:
         """将私钥转化为加密的 ASN.1 DER 编码字节数据"""
         ...
+
     @classmethod
     def decrypt_from_pem(cls, password: str, filepath: str) -> "SM9PrivateKey":
         """根据 pem 文件生成私钥"""
         ...
+
     def encrypt_to_pem(cls, password: str, filepath: str) -> None:
         """将私钥数据写入指定文件"""
         ...
+
     def decrypt(self, identity: bytes, ciphertext: bytes) -> bytes:
         """解密数据
 
@@ -288,16 +294,20 @@ class SM9MasterPublicKey:
     def from_der(cls, data: bytes) -> "SM9MasterPublicKey":
         """从 ASN.1 DER 编码的字节数据生成公钥"""
         ...
+
     def to_der(self) -> bytes:
         """将公钥转化为 ASN.1 DER 编码字节数据"""
         ...
+
     @classmethod
     def from_pem(cls, filepath: str) -> "SM9MasterPublicKey":
         """根据 pem 文件生成主公钥"""
         ...
+
     def to_pem(self, filepath: str) -> None:
         """将公钥数据写入文件"""
         ...
+
     def encrypt(self, identity: bytes, plaintext: bytes) -> bytes:
         """加密数据
 
@@ -319,13 +329,16 @@ class SM9MasterKey:
         Returns: 主密钥
         """
         ...
+
     @classmethod
     def from_der(cls, data: bytes) -> "SM9MasterKey":
         """从 ASN.1 DER 编码的字节数据生成主密钥"""
         ...
+
     def to_der(self) -> bytes:
         """将主密钥转化为 ASN.1 DER 编码字节数据"""
         ...
+
     @classmethod
     def decrypt_from_der(cls, password: str, data: bytes) -> "SM9MasterKey":
         """从加密的 ASN.1 DER 编码的字节数据生成主密钥
@@ -337,9 +350,11 @@ class SM9MasterKey:
         Return: 主密钥
         """
         ...
+
     def encrypt_to_der(self, password: str) -> bytes:
         """将主密钥转化为加密的 ASN.1 DER 编码字节数据"""
         ...
+
     @classmethod
     def decrypt_from_pem(cls, password: str, filepath: str) -> "SM9MasterKey":
         """根据加密的 pem 文件生成主密钥
@@ -350,6 +365,7 @@ class SM9MasterKey:
 
         Return: 主密钥
         """
+
     def encrypt_to_pem(self, password: str, filepath: str) -> None:
         """将主密钥转化为加密 pem 数据，并写入指定文件
 
@@ -358,6 +374,7 @@ class SM9MasterKey:
             filepath: 文件路径
 
         """
+
     def extract_key(self, identity: bytes) -> "SM9PrivateKey":
         """根据用户标志生成私钥。
 
@@ -367,6 +384,7 @@ class SM9MasterKey:
         Returns: 私钥
         """
         ...
+
     def public_key(self) -> "SM9MasterPublicKey":
         """返回主公钥。
 

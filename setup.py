@@ -138,9 +138,8 @@ setup(
     version=get_version(),
     url="https://github.com/yetsing/gmssl_pyx",
     author="yeqing",
-    license="Apache Software License",
+    license="Apache-2.0",
     classifiers=[
-        "License :: OSI Approved :: Apache Software License",
         "Intended Audience :: Developers",
         "Operating System :: Unix",
         "Operating System :: Microsoft :: Windows",

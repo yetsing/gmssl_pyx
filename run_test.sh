@@ -14,3 +14,6 @@ set -ex
 #python -m unittest discover -v tests
 python test.py
 python run_example.py
+python --version
+# 如果所有测试都通过，打印绿色的成功信息
+echo -e "\033[0;32mAll tests passed successfully!\033[0m"
