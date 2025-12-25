@@ -29,18 +29,18 @@ jobs:
             platform_id: win_amd64
 
           # Linux 64 bit manylinux
-          - os: ubuntu-20.04
+          - os: ubuntu-24.04
             python: 38
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux2010
-          - os: ubuntu-20.04
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04
             python: 39
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux2010
-          - os: ubuntu-20.04
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04
             python: 310
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux2010
+            manylinux_image: manylinux2014
 
           # MacOS x86_64
           - os: macos-15-intel
@@ -62,6 +62,7 @@ jobs:
         uses: pypa/cibuildwheel@v3.3.0
         env:
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_TEST_COMMAND: python -m unittest discover {project}/tests
 
       - uses: actions/upload-artifact@v4
