@@ -13,4 +13,4 @@ extern PyObject *GmsslInnerError;
 
 extern PyObject *InvalidValueError;
 
-#endif //GMSSL_PYX_GMSSLEXT_H
+#endif // GMSSL_PYX_GMSSLEXT_H

@@ -8,6 +8,4 @@ extern PyTypeObject GmsslextSM9PrivateKeyType;
 extern PyTypeObject GmsslextSM9MasterPublicKeyType;
 extern PyTypeObject GmsslextSM9MasterKeyType;
 
-
-
-#endif //GMSSL_PYX_GMSSLEXT_SM9_H
+#endif // GMSSL_PYX_GMSSLEXT_SM9_H
