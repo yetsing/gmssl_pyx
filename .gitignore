@@ -57,3 +57,5 @@ cmake-build-debug
 venv
 __pycache__
 zzz/
+.cache/
+compile_commands.json

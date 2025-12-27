@@ -5,16 +5,15 @@
 
 #include <Python.h>
 
+#include "gmssl/rand.h"
 #include "gmssl/sm2.h"
 #include "gmssl/sm3.h"
 #include "gmssl/sm4.h"
-#include <gmssl/rand.h>
 
 #include "gmsslext.h"
 #include "gmsslext_sm9.h"
 
 PyObject *GmsslInnerError;
-
 PyObject *InvalidValueError;
 
 static PyObject *gmsslext_sm2_key_generate(PyObject *self,
@@ -32,8 +31,9 @@ static PyObject *gmsslext_sm2_key_generate(PyObject *self,
   }
   // 整数字面量不是 Py_ssize_t 类型，需要强制转换，不然 Windows 会报错
   // MemoryError
-  return Py_BuildValue("y#y#", &sm2_key.public_key, (Py_ssize_t)64,
-                       &sm2_key.private_key, (Py_ssize_t)32);
+  return Py_BuildValue("y#y#", (const char *)&sm2_key.public_key,
+                       (Py_ssize_t)64, (const char *)sm2_key.private_key,
+                       (Py_ssize_t)32);
 }
 
 static PyObject *gmsslext_sm2_encrypt(PyObject *self, PyObject *args,
@@ -187,7 +187,7 @@ static PyObject *gmsslext_sm2_verify_sm3_digest(PyObject *self, PyObject *args,
     return NULL;
   }
   ret = sm2_verify(&sm2_key, (uint8_t *)digest, (uint8_t *)sig, siglen);
-  if (ret == 1) {
+  if (ret == GMSSL_INNER_OK) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;
@@ -578,8 +578,8 @@ static PyObject *gmsslext_sm4_ctr_encrypt(PyObject *self, PyObject *args,
   sm4_set_encrypt_key(&sm4_key, (uint8_t *)key);
   // sm4_ctr_encrypt 会修改 ctr ，会导致 Python 端调用者的 ctr 也发生改变，copy
   // 一份来用
-  unsigned char temp_ctr[16];
-  memcpy(temp_ctr, ctr, 16);
+  unsigned char temp_ctr[SM4_BLOCK_SIZE];
+  memcpy(temp_ctr, ctr, SM4_BLOCK_SIZE);
   sm4_ctr_encrypt(&sm4_key, temp_ctr, (uint8_t *)plaintext, plaintext_length,
                   (uint8_t *)out);
   PyObject *ciphertext_obj = Py_BuildValue("y#", out, plaintext_length);
@@ -627,8 +627,8 @@ static PyObject *gmsslext_sm4_ctr_decrypt(PyObject *self, PyObject *args,
 
   // sm4_ctr_decrypt 会修改 ctr ，会导致 Python 端调用者的 ctr 也发生改变，copy
   // 一份来用
-  unsigned char temp_ctr[16];
-  memcpy(temp_ctr, ctr, 16);
+  unsigned char temp_ctr[SM4_BLOCK_SIZE];
+  memcpy(temp_ctr, ctr, SM4_BLOCK_SIZE);
   sm4_ctr_decrypt(&sm4_key, temp_ctr, (uint8_t *)ciphertext, ciphertext_length,
                   (uint8_t *)out);
   PyObject *plaintext_obj = Py_BuildValue("y#", out, ciphertext_length);
@@ -681,6 +681,7 @@ static PyObject *gmsslext_sm4_gcm_encrypt(PyObject *self, PyObject *args,
                             aad_length, (uint8_t *)plaintext, plaintext_length,
                             (uint8_t *)out, sizeof(tag), (uint8_t *)tag);
   if (ret != GMSSL_INNER_OK) {
+    PyMem_RawFree(out);
     PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm4_gcm_encrypt");
     return NULL;
   }
@@ -737,6 +738,7 @@ static PyObject *gmsslext_sm4_gcm_decrypt(PyObject *self, PyObject *args,
                       aad_length, (uint8_t *)ciphertext, ciphertext_length,
                       (uint8_t *)tag, tag_length, (uint8_t *)out);
   if (ret != GMSSL_INNER_OK) {
+    PyMem_RawFree(out);
     PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm4_gcm_decrypt");
     return NULL;
   }
@@ -759,8 +761,12 @@ static PyObject *gmsslext_rand_bytes(PyObject *self, PyObject *args,
     return NULL;
   }
   char *buf = PyMem_RawMalloc(n);
+  if (buf == NULL) {
+    return PyErr_NoMemory();
+  }
   ret = rand_bytes((uint8_t *)buf, n);
   if (ret != GMSSL_INNER_OK) {
+    PyMem_RawFree(buf);
     PyErr_SetString(GmsslInnerError, "libgmssl inner error in rand_bytes");
     return NULL;
   }
@@ -770,7 +776,7 @@ static PyObject *gmsslext_rand_bytes(PyObject *self, PyObject *args,
 }
 
 // 定义模块暴露的函数
-static PyMethodDef SpamMethods[] = {
+static PyMethodDef gmsslext_methods[] = {
     {
         "sm2_key_generate",
         gmsslext_sm2_key_generate,
@@ -835,37 +841,37 @@ static PyMethodDef SpamMethods[] = {
         "sm4_cbc_padding_encrypt",
         (PyCFunction)(void (*)(void))gmsslext_sm4_cbc_padding_encrypt,
         METH_VARARGS | METH_KEYWORDS,
-        "SM3 cbc encrypt, use PKCS#7 padding",
+        "SM4 cbc encrypt, use PKCS#7 padding",
     },
     {
         "sm4_cbc_padding_decrypt",
         (PyCFunction)(void (*)(void))gmsslext_sm4_cbc_padding_decrypt,
         METH_VARARGS | METH_KEYWORDS,
-        "SM3 cbc decrypt, use PKCS#7 padding",
+        "SM4 cbc decrypt, use PKCS#7 padding",
     },
     {
         "sm4_ctr_encrypt",
         (PyCFunction)(void (*)(void))gmsslext_sm4_ctr_encrypt,
         METH_VARARGS | METH_KEYWORDS,
-        "SM3 ctr encrypt",
+        "SM4 ctr encrypt",
     },
     {
         "sm4_ctr_decrypt",
         (PyCFunction)(void (*)(void))gmsslext_sm4_ctr_decrypt,
         METH_VARARGS | METH_KEYWORDS,
-        "SM3 ctr decrypt",
+        "SM4 ctr decrypt",
     },
     {
         "sm4_gcm_encrypt",
         (PyCFunction)(void (*)(void))gmsslext_sm4_gcm_encrypt,
         METH_VARARGS | METH_KEYWORDS,
-        "SM3 gcm encrypt",
+        "SM4 gcm encrypt",
     },
     {
         "sm4_gcm_decrypt",
         (PyCFunction)(void (*)(void))gmsslext_sm4_gcm_decrypt,
         METH_VARARGS | METH_KEYWORDS,
-        "SM3 gcm decrypt",
+        "SM4 gcm decrypt",
     },
     {
         "rand_bytes",
@@ -877,13 +883,13 @@ static PyMethodDef SpamMethods[] = {
 };
 
 // 模块属性定义
-static struct PyModuleDef spammodule = {
+static struct PyModuleDef gmsslext_module = {
     PyModuleDef_HEAD_INIT,
     "gmsslext",     /* name of module */
     "gmsslext doc", /* module documentation, may be NULL */
     -1,             /* size of per-interpreter state of the module,
                    or -1 if the module keeps state in global variables. */
-    SpamMethods,
+    gmsslext_methods,
     NULL,
     NULL,
     NULL,
@@ -903,7 +909,7 @@ PyMODINIT_FUNC PyInit_gmsslext(void) {
     return NULL;
   }
 
-  m = PyModule_Create(&spammodule);
+  m = PyModule_Create(&gmsslext_module);
   if (m == NULL) {
     return NULL;
   }
@@ -949,8 +955,6 @@ PyMODINIT_FUNC PyInit_gmsslext(void) {
   if (PyModule_AddObject(m, "InvalidValueError", InvalidValueError) < 0) {
     Py_XDECREF(InvalidValueError);
     Py_CLEAR(InvalidValueError);
-    Py_XDECREF(GmsslInnerError);
-    Py_CLEAR(GmsslInnerError);
     Py_DECREF(m);
     return NULL;
   }

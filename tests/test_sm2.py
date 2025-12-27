@@ -172,7 +172,7 @@ class SM2TestCase(unittest.TestCase):
             sm2_sign(private_key, public_key, b"")
         self.assertEqual(str(cm.exception), "empty message")
         with self.assertRaises(InvalidValueError) as cm:
-            sm2_sign(private_key, public_key, message, signer_id="")
+            sm2_sign(private_key, public_key, message, signer_id=b"")
         self.assertEqual(str(cm.exception), "invalid signer_id length")
 
         with self.assertRaises(InvalidValueError) as cm:
@@ -185,7 +185,7 @@ class SM2TestCase(unittest.TestCase):
             sm2_verify(public_key, message, b"")
         self.assertEqual(str(cm.exception), "empty signature")
         with self.assertRaises(InvalidValueError) as cm:
-            sm2_verify(public_key, message, b"signature", signer_id="")
+            sm2_verify(public_key, message, b"signature", signer_id=b"")
         self.assertEqual(str(cm.exception), "invalid signer_id length")
 
     def test_normalize_sm2_public_key(self):
