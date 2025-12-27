@@ -3,7 +3,6 @@
 
 #include <Python.h>
 
-extern PyTypeObject CustomType;
 extern PyTypeObject GmsslextSM9PrivateKeyType;
 extern PyTypeObject GmsslextSM9MasterPublicKeyType;
 extern PyTypeObject GmsslextSM9MasterKeyType;

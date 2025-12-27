@@ -893,10 +893,6 @@ static struct PyModuleDef spammodule = {
 PyMODINIT_FUNC PyInit_gmsslext(void) {
   PyObject *m;
 
-  // create custom type
-  if (PyType_Ready(&CustomType) < 0) {
-    return NULL;
-  }
   if (PyType_Ready(&GmsslextSM9PrivateKeyType) < 0) {
     return NULL;
   }
@@ -912,17 +908,10 @@ PyMODINIT_FUNC PyInit_gmsslext(void) {
     return NULL;
   }
 
-  Py_INCREF(&CustomType);
-  if (PyModule_AddObject(m, "Custom", (PyObject *)&CustomType) < 0) {
-    Py_DECREF(&CustomType);
-    Py_DECREF(m);
-    return NULL;
-  }
   Py_INCREF(&GmsslextSM9PrivateKeyType);
   if (PyModule_AddObject(m, "SM9PrivateKey",
                          (PyObject *)&GmsslextSM9PrivateKeyType) < 0) {
     Py_DECREF(&GmsslextSM9PrivateKeyType);
-    Py_DECREF(&CustomType);
     Py_DECREF(m);
     return NULL;
   }
@@ -931,7 +920,6 @@ PyMODINIT_FUNC PyInit_gmsslext(void) {
                          (PyObject *)&GmsslextSM9MasterPublicKeyType) < 0) {
     Py_DECREF(&GmsslextSM9MasterPublicKeyType);
     Py_DECREF(&GmsslextSM9PrivateKeyType);
-    Py_DECREF(&CustomType);
     Py_DECREF(m);
     return NULL;
   }
@@ -941,7 +929,6 @@ PyMODINIT_FUNC PyInit_gmsslext(void) {
     Py_DECREF(&GmsslextSM9MasterKeyType);
     Py_DECREF(&GmsslextSM9MasterPublicKeyType);
     Py_DECREF(&GmsslextSM9PrivateKeyType);
-    Py_DECREF(&CustomType);
     Py_DECREF(m);
     return NULL;
   }
@@ -952,7 +939,6 @@ PyMODINIT_FUNC PyInit_gmsslext(void) {
   if (PyModule_AddObject(m, "GmsslInnerError", GmsslInnerError) < 0) {
     Py_XDECREF(GmsslInnerError);
     Py_CLEAR(GmsslInnerError);
-    Py_DECREF(&CustomType);
     Py_DECREF(m);
     return NULL;
   }
@@ -965,7 +951,6 @@ PyMODINIT_FUNC PyInit_gmsslext(void) {
     Py_CLEAR(InvalidValueError);
     Py_XDECREF(GmsslInnerError);
     Py_CLEAR(GmsslInnerError);
-    Py_DECREF(&CustomType);
     Py_DECREF(m);
     return NULL;
   }
