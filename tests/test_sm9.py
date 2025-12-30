@@ -40,7 +40,7 @@ class SM9CipherTest(unittest.TestCase):
         #     got = key.decrypt(identity, ciphertext)
         #     self.assertEqual(got, plaintext)
 
-        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
         plaintext = secrets.token_bytes(n)
         ciphertext = public_key.encrypt(identity, plaintext)
         got = key.decrypt(identity, ciphertext)
@@ -81,7 +81,7 @@ class SM9CipherTest(unittest.TestCase):
         #     got = key.decrypt(identity, ciphertext)
         #     self.assertEqual(got, plaintext)
 
-        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
         plaintext = secrets.token_bytes(n)
         ciphertext = public_key.encrypt(identity, plaintext)
         got = key.decrypt(identity, ciphertext)
@@ -125,7 +125,7 @@ class SM9CipherTest(unittest.TestCase):
         #     got = key.decrypt(identity, ciphertext)
         #     self.assertEqual(got, plaintext)
 
-        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
         plaintext = secrets.token_bytes(n)
         ciphertext = public_key.encrypt(identity, plaintext)
         got = key.decrypt(identity, ciphertext)
@@ -169,7 +169,7 @@ class SM9CipherTest(unittest.TestCase):
         #     got = key.decrypt(identity, ciphertext)
         #     self.assertEqual(got, plaintext)
 
-        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
         plaintext = secrets.token_bytes(n)
         ciphertext = public_key.encrypt(identity, plaintext)
         got = key.decrypt(identity, ciphertext)
@@ -212,7 +212,7 @@ class SM9CipherTest(unittest.TestCase):
         #     got = key.decrypt(identity, ciphertext)
         #     self.assertEqual(got, plaintext)
 
-        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
         plaintext = secrets.token_bytes(n)
         ciphertext = public_key.encrypt(identity, plaintext)
         got = key.decrypt(identity, ciphertext)
@@ -240,7 +240,7 @@ class SM9CipherTest(unittest.TestCase):
         #     got = key.decrypt(identity, ciphertext)
         #     self.assertEqual(got, plaintext)
 
-        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
         plaintext = secrets.token_bytes(n)
         ciphertext = public_key.encrypt(identity, plaintext)
         got = key.decrypt(identity, ciphertext)
@@ -271,7 +271,7 @@ class SM9CipherTest(unittest.TestCase):
         #     got = key.decrypt(identity, ciphertext)
         #     self.assertEqual(got, plaintext)
 
-        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
         plaintext = secrets.token_bytes(n)
         ciphertext = public_key.encrypt(identity, plaintext)
         got = key.decrypt(identity, ciphertext)
@@ -305,7 +305,7 @@ class SM9CipherTest(unittest.TestCase):
         #     got = key.decrypt(identity, ciphertext)
         #     self.assertEqual(got, plaintext)
 
-        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
         plaintext = secrets.token_bytes(n)
         ciphertext = public_key.encrypt(identity, plaintext)
         got = key.decrypt(identity, ciphertext)
@@ -338,7 +338,7 @@ class SM9CipherTest(unittest.TestCase):
         #     got = key.decrypt(identity, ciphertext)
         #     self.assertEqual(got, plaintext)
 
-        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
         plaintext = secrets.token_bytes(n)
         ciphertext = public_key.encrypt(identity, plaintext)
         got = key.decrypt(identity, ciphertext)
