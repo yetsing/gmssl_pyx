@@ -47,41 +47,43 @@ def compile_gmssl():
 
     os.chdir("GmSSL")
     if sys.platform.startswith("linux"):
-        # 2. 修改 CMakeLists.txt ，直接编译会报错
-        # /usr/bin/ld: ./GmSSL/build/bin/libgmssl.a(sm2_key.c.o): relocation R_X86_64_PC32 against symbol `stderr@@GLIBC_2.2.5' can not be used when making a shared object; recompile with -fPIC
-        cmake_filename = "CMakeLists.txt"
-        with open(cmake_filename, "r", encoding=utf8) as f:
-            text = f.read()
-        # rand_unix.需要使用 getentropy
-        # getentropy 在老版本的Linux发行版和 glibc 中不存在
-        text = text.replace("rand_unix.c", "rand.c")
-        # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
-        append_text = "add_compile_options(-fPIC)"
-        text = text.replace(
-            "project(GmSSL)",
-            "project(GmSSL)\n\n{}\n\n".format(append_text),
-        )
-        with open(cmake_filename, "w", encoding=utf8) as f:
-            f.write(text)
+        pass
+        # # 2. 修改 CMakeLists.txt ，直接编译会报错
+        # # /usr/bin/ld: ./GmSSL/build/bin/libgmssl.a(sm2_key.c.o): relocation R_X86_64_PC32 against symbol `stderr@@GLIBC_2.2.5' can not be used when making a shared object; recompile with -fPIC
+        # cmake_filename = "CMakeLists.txt"
+        # with open(cmake_filename, "r", encoding=utf8) as f:
+        #     text = f.read()
+        # # rand_unix.需要使用 getentropy
+        # # getentropy 在老版本的Linux发行版和 glibc 中不存在
+        # text = text.replace("rand_unix.c", "rand.c")
+        # # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
+        # append_text = "add_compile_options(-fPIC)"
+        # text = text.replace(
+        #     "project(GmSSL)",
+        #     "project(GmSSL)\n\n{}\n\n".format(append_text),
+        # )
+        # with open(cmake_filename, "w", encoding=utf8) as f:
+        #     f.write(text)
 
     elif sys.platform.startswith("win"):
-        # 修改 sm2.h 内容，直接用 windows 编译会报语法错误
-        # 具体原因不清楚，不想深究了
-        filename = "include/gmssl/sm2.h"
-        with open(filename, "r", encoding=utf8) as f:
-            text = f.read()
-        text = text.replace("#include <gmssl/api.h>", "")
-        text = text.replace("_gmssl_export", "__declspec(dllexport)")
-        with open(filename, "w", encoding=utf8) as f:
-            f.write(text)
+        pass
+        # # 修改 sm2.h 内容，直接用 windows 编译会报语法错误
+        # # 具体原因不清楚，不想深究了
+        # filename = "include/gmssl/sm2.h"
+        # with open(filename, "r", encoding=utf8) as f:
+        #     text = f.read()
+        # text = text.replace("#include <gmssl/api.h>", "")
+        # text = text.replace("_gmssl_export", "__declspec(dllexport)")
+        # with open(filename, "w", encoding=utf8) as f:
+        #     f.write(text)
 
-        filename = "include/gmssl/rand.h"
-        with open(filename, "r", encoding=utf8) as f:
-            text = f.read()
-        text = text.replace("#include <gmssl/api.h>", "")
-        text = text.replace("_gmssl_export", "__declspec(dllexport)")
-        with open(filename, "w", encoding=utf8) as f:
-            f.write(text)
+        # filename = "include/gmssl/rand.h"
+        # with open(filename, "r", encoding=utf8) as f:
+        #     text = f.read()
+        # text = text.replace("#include <gmssl/api.h>", "")
+        # text = text.replace("_gmssl_export", "__declspec(dllexport)")
+        # with open(filename, "w", encoding=utf8) as f:
+        #     f.write(text)
 
     # 3.编译静态库
     if os.path.exists("build"):
