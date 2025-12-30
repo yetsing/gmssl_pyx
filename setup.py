@@ -48,22 +48,22 @@ def compile_gmssl():
     os.chdir("GmSSL")
     if sys.platform.startswith("linux"):
         pass
-        # 2. 修改 CMakeLists.txt ，直接编译会报错
-        # /usr/bin/ld: ./GmSSL/build/bin/libgmssl.a(sm2_key.c.o): relocation R_X86_64_PC32 against symbol `stderr@@GLIBC_2.2.5' can not be used when making a shared object; recompile with -fPIC
-        cmake_filename = "CMakeLists.txt"
-        with open(cmake_filename, "r", encoding=utf8) as f:
-            text = f.read()
-        # rand_unix.需要使用 getentropy
-        # getentropy 在老版本的Linux发行版和 glibc 中不存在
-        text = text.replace("rand_unix.c", "rand.c")
-        # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
-        append_text = "add_compile_options(-fPIC)"
-        text = text.replace(
-            "project(GmSSL)",
-            "project(GmSSL)\n\n{}\n\n".format(append_text),
-        )
-        with open(cmake_filename, "w", encoding=utf8) as f:
-            f.write(text)
+        # # 2. 修改 CMakeLists.txt ，直接编译会报错
+        # # /usr/bin/ld: ./GmSSL/build/bin/libgmssl.a(sm2_key.c.o): relocation R_X86_64_PC32 against symbol `stderr@@GLIBC_2.2.5' can not be used when making a shared object; recompile with -fPIC
+        # cmake_filename = "CMakeLists.txt"
+        # with open(cmake_filename, "r", encoding=utf8) as f:
+        #     text = f.read()
+        # # rand_unix.需要使用 getentropy
+        # # getentropy 在老版本的Linux发行版和 glibc 中不存在
+        # text = text.replace("rand_unix.c", "rand.c")
+        # # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
+        # append_text = "add_compile_options(-fPIC)"
+        # text = text.replace(
+        #     "project(GmSSL)",
+        #     "project(GmSSL)\n\n{}\n\n".format(append_text),
+        # )
+        # with open(cmake_filename, "w", encoding=utf8) as f:
+        #     f.write(text)
 
     elif sys.platform.startswith("win"):
         pass
