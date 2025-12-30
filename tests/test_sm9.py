@@ -7,6 +7,7 @@ from gmssl_pyx import (
     SM9_MAX_CIPHERTEXT_SIZE,
     SM9_MAX_PLAINTEXT_SIZE,
     InvalidValueError,
+    GmsslInnerError,
     SM9MasterKey,
     SM9MasterPublicKey,
     SM9PrivateKey,
@@ -33,6 +34,12 @@ class SM9CipherTest(unittest.TestCase):
         key = master.extract_key(identity)
         public_key = master.public_key()
 
+        # for n in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+        #     plaintext = secrets.token_bytes(n)
+        #     ciphertext = public_key.encrypt(identity, plaintext)
+        #     got = key.decrypt(identity, ciphertext)
+        #     self.assertEqual(got, plaintext)
+
         n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
         plaintext = secrets.token_bytes(n)
         ciphertext = public_key.encrypt(identity, plaintext)
@@ -49,12 +56,17 @@ class SM9CipherTest(unittest.TestCase):
         plaintext = secrets.token_bytes(SM9_MAX_PLAINTEXT_SIZE + 1)
         with self.assertRaises(InvalidValueError) as cm:
             public_key.encrypt(identity, plaintext)
-        self.assertEqual(str(cm.exception), "invalid sm9 plaintext length")
+            self.assertEqual(str(cm.exception), "invalid sm9 plaintext length")
+
+        ciphertext = secrets.token_bytes(SM9_MAX_CIPHERTEXT_SIZE - 1)
+        with self.assertRaises(InvalidValueError) as cm:
+            key.decrypt(b"", ciphertext)
+            self.assertEqual(str(cm.exception), "invalid sm9 identity or ciphertext length")
 
         ciphertext = secrets.token_bytes(SM9_MAX_CIPHERTEXT_SIZE + 1)
         with self.assertRaises(InvalidValueError) as cm:
             key.decrypt(identity, ciphertext)
-        self.assertEqual(str(cm.exception), "invalid sm9 ciphertext length")
+            self.assertEqual(str(cm.exception), "invalid sm9 identity or ciphertext length")
 
     def test_sm9_master_key_der(self):
         identity = secrets.token_bytes(6)
@@ -62,6 +74,12 @@ class SM9CipherTest(unittest.TestCase):
         master = SM9MasterKey.generate()
         key = master.extract_key(identity)
         public_key = master.public_key()
+
+        # for n in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+        #     plaintext = secrets.token_bytes(n)
+        #     ciphertext = public_key.encrypt(identity, plaintext)
+        #     got = key.decrypt(identity, ciphertext)
+        #     self.assertEqual(got, plaintext)
 
         n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
         plaintext = secrets.token_bytes(n)
@@ -76,14 +94,23 @@ class SM9CipherTest(unittest.TestCase):
         self.assertEqual(got, plaintext)
 
         public_key2 = master2.public_key()
-        ciphertext = public_key2.encrypt(identity, plaintext)
+        # decrypt previous ciphertext
         got = key.decrypt(identity, ciphertext)
+        self.assertEqual(got, plaintext)
+        ciphertext2 = public_key2.encrypt(identity, plaintext)
+        got = key.decrypt(identity, ciphertext2)
         self.assertEqual(got, plaintext)
 
         plaintext = secrets.token_bytes(n)
-        ciphertext = public_key2.encrypt(identity, plaintext)
-        got = key2.decrypt(identity, ciphertext)
+        ciphertext3 = public_key2.encrypt(identity, plaintext)
+        got = key2.decrypt(identity, ciphertext3)
         self.assertEqual(got, plaintext)
+
+        with self.assertRaises(InvalidValueError):
+            SM9MasterKey.from_der(master_der + b"\x00")
+
+        with self.assertRaises(GmsslInnerError):
+            SM9MasterKey.from_der(b"")
 
     def test_sm9_master_key_pem(self):
         identity = secrets.token_bytes(6)
@@ -91,6 +118,12 @@ class SM9CipherTest(unittest.TestCase):
         master = SM9MasterKey.generate()
         key = master.extract_key(identity)
         public_key = master.public_key()
+
+        # for n in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+        #     plaintext = secrets.token_bytes(n)
+        #     ciphertext = public_key.encrypt(identity, plaintext)
+        #     got = key.decrypt(identity, ciphertext)
+        #     self.assertEqual(got, plaintext)
 
         n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
         plaintext = secrets.token_bytes(n)
@@ -116,12 +149,25 @@ class SM9CipherTest(unittest.TestCase):
         got = key2.decrypt(identity, ciphertext)
         self.assertEqual(got, plaintext)
 
+        with self.assertRaises(InvalidValueError):
+            SM9MasterKey.decrypt_from_pem("", pem_filename)
+        with self.assertRaises(InvalidValueError):
+            SM9MasterKey.decrypt_from_pem(password, "non_exist_file.pem")
+        with self.assertRaises(InvalidValueError):
+            SM9MasterKey.decrypt_from_pem(password, "")
+
     def test_sm9_master_key_encrypt_der(self):
         identity = secrets.token_bytes(6)
 
         master = SM9MasterKey.generate()
         key = master.extract_key(identity)
         public_key = master.public_key()
+
+        # for n in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+        #     plaintext = secrets.token_bytes(n)
+        #     ciphertext = public_key.encrypt(identity, plaintext)
+        #     got = key.decrypt(identity, ciphertext)
+        #     self.assertEqual(got, plaintext)
 
         n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
         plaintext = secrets.token_bytes(n)
@@ -146,12 +192,25 @@ class SM9CipherTest(unittest.TestCase):
         got = key2.decrypt(identity, ciphertext)
         self.assertEqual(got, plaintext)
 
+        with self.assertRaises(InvalidValueError):
+            SM9MasterKey.decrypt_from_der("", master_der)
+        with self.assertRaises(InvalidValueError):
+            SM9MasterKey.decrypt_from_der(password, b"")
+        with self.assertRaises(InvalidValueError):
+            SM9MasterKey.decrypt_from_der("", b"")
+
     def test_public_key_der(self):
         identity = secrets.token_bytes(6)
 
         master = SM9MasterKey.generate()
         key = master.extract_key(identity)
         public_key = master.public_key()
+
+        # for n in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+        #     plaintext = secrets.token_bytes(n)
+        #     ciphertext = public_key.encrypt(identity, plaintext)
+        #     got = key.decrypt(identity, ciphertext)
+        #     self.assertEqual(got, plaintext)
 
         n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
         plaintext = secrets.token_bytes(n)
@@ -175,6 +234,12 @@ class SM9CipherTest(unittest.TestCase):
         key = master.extract_key(identity)
         public_key = master.public_key()
 
+        # for n in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+        #     plaintext = secrets.token_bytes(n)
+        #     ciphertext = public_key.encrypt(identity, plaintext)
+        #     got = key.decrypt(identity, ciphertext)
+        #     self.assertEqual(got, plaintext)
+
         n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
         plaintext = secrets.token_bytes(n)
         ciphertext = public_key.encrypt(identity, plaintext)
@@ -188,12 +253,23 @@ class SM9CipherTest(unittest.TestCase):
         got = key.decrypt(identity, ciphertext)
         self.assertEqual(got, plaintext)
 
+        with self.assertRaises(InvalidValueError):
+            SM9MasterPublicKey.from_pem("")
+        with self.assertRaises(InvalidValueError):
+            SM9MasterPublicKey.from_pem("non_exist_file.pem")
+
     def test_private_key_der(self):
         identity = secrets.token_bytes(6)
 
         master = SM9MasterKey.generate()
         key = master.extract_key(identity)
         public_key = master.public_key()
+
+        # for n in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+        #     plaintext = secrets.token_bytes(n)
+        #     ciphertext = public_key.encrypt(identity, plaintext)
+        #     got = key.decrypt(identity, ciphertext)
+        #     self.assertEqual(got, plaintext)
 
         n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
         plaintext = secrets.token_bytes(n)
@@ -209,12 +285,25 @@ class SM9CipherTest(unittest.TestCase):
         pkey_der2 = key.to_der()
         self.assertEqual(pkey_der, pkey_der2)
 
+        with self.assertRaises(InvalidValueError):
+            SM9PrivateKey.from_der(b"")
+        with self.assertRaises(InvalidValueError):
+            SM9PrivateKey.from_der(pkey_der + b"\x01")
+        with self.assertRaises(GmsslInnerError):
+            SM9PrivateKey.from_der(b"\x00" * 10)
+
     def test_private_key_pem(self):
         identity = secrets.token_bytes(6)
 
         master = SM9MasterKey.generate()
         key = master.extract_key(identity)
         public_key = master.public_key()
+
+        # for n in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+        #     plaintext = secrets.token_bytes(n)
+        #     ciphertext = public_key.encrypt(identity, plaintext)
+        #     got = key.decrypt(identity, ciphertext)
+        #     self.assertEqual(got, plaintext)
 
         n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
         plaintext = secrets.token_bytes(n)
@@ -229,12 +318,25 @@ class SM9CipherTest(unittest.TestCase):
         got = key.decrypt(identity, ciphertext)
         self.assertEqual(got, plaintext)
 
+        with self.assertRaises(InvalidValueError):
+            SM9PrivateKey.decrypt_from_pem("", pem_filename)
+        with self.assertRaises(InvalidValueError):
+            SM9PrivateKey.decrypt_from_pem(password, "non_exist_file.pem")
+        with self.assertRaises(InvalidValueError):
+            SM9PrivateKey.decrypt_from_pem(password, "")
+
     def test_private_key_encrypt_der(self):
         identity = secrets.token_bytes(6)
 
         master = SM9MasterKey.generate()
         key = master.extract_key(identity)
         public_key = master.public_key()
+
+        # for n in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+        #     plaintext = secrets.token_bytes(n)
+        #     ciphertext = public_key.encrypt(identity, plaintext)
+        #     got = key.decrypt(identity, ciphertext)
+        #     self.assertEqual(got, plaintext)
 
         n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE)
         plaintext = secrets.token_bytes(n)
@@ -247,3 +349,12 @@ class SM9CipherTest(unittest.TestCase):
         key = SM9PrivateKey.decrypt_from_der(password, pkey_der)
         got = key.decrypt(identity, ciphertext)
         self.assertEqual(got, plaintext)
+
+        with self.assertRaises(InvalidValueError):
+            SM9PrivateKey.decrypt_from_der("", b"")
+        with self.assertRaises(InvalidValueError):
+            SM9PrivateKey.decrypt_from_der(password, b"")
+        with self.assertRaises(InvalidValueError):
+            SM9PrivateKey.decrypt_from_der("", pkey_der)
+        with self.assertRaises(InvalidValueError):
+            SM9PrivateKey.decrypt_from_der(password, pkey_der + b"\x03")

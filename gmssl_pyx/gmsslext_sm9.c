@@ -7,7 +7,6 @@
 
 #include "structmember.h"
 
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -22,7 +21,8 @@
 
 // SM9 private key
 typedef struct {
-  PyObject_HEAD SM9_ENC_KEY key;
+  PyObject_HEAD;
+  SM9_ENC_KEY key;
 } SM9PrivateKeyObject;
 
 static void SM9PrivateKey_dealloc(SM9PrivateKeyObject *self) {
@@ -63,6 +63,11 @@ static PyObject *SM9PrivateKey_from_der(PyTypeObject *type, PyObject *args,
                                    &data_length)) {
     return NULL;
   }
+  if (data_length <= 0) {
+    PyErr_SetString(InvalidValueError, "empty data");
+    return NULL;
+  }
+
   SM9PrivateKeyObject *self =
       (SM9PrivateKeyObject *)PyObject_CallFunctionObjArgs((PyObject *)type,
                                                           NULL);
@@ -73,8 +78,14 @@ static PyObject *SM9PrivateKey_from_der(PyTypeObject *type, PyObject *args,
   ret =
       sm9_enc_key_from_der(&self->key, (const uint8_t **)&data, &c_data_length);
   if (ret != GMSSL_INNER_OK) {
+    Py_DECREF(self);
     PyErr_SetString(GmsslInnerError,
                     "libgmssl inner error in sm9_enc_key_from_der");
+    return NULL;
+  }
+  if (c_data_length != 0) {
+    Py_DECREF(self);
+    PyErr_SetString(InvalidValueError, "extra data after SM9 private key");
     return NULL;
   }
   return (PyObject *)self;
@@ -99,9 +110,9 @@ static PyObject *SM9PrivateKey_to_der(SM9PrivateKeyObject *self,
 static PyObject *SM9PrivateKey_decrypt_from_der(PyTypeObject *type,
                                                 PyObject *args,
                                                 PyObject *keywds) {
-  const char *data;
+  const char *data = NULL;
   Py_ssize_t data_length;
-  const char *password;
+  const char *password = NULL;
   static char *kwlist[] = {"password", "data", NULL};
   int ret;
 
@@ -110,6 +121,15 @@ static PyObject *SM9PrivateKey_decrypt_from_der(PyTypeObject *type,
                                    &data, &data_length)) {
     return NULL;
   }
+  if (password == NULL || strlen(password) == 0) {
+    PyErr_SetString(InvalidValueError, "empty password");
+    return NULL;
+  }
+  if (data_length <= 0) {
+    PyErr_SetString(InvalidValueError, "empty data");
+    return NULL;
+  }
+
   SM9PrivateKeyObject *self =
       (SM9PrivateKeyObject *)PyObject_CallFunctionObjArgs((PyObject *)type,
                                                           NULL);
@@ -120,9 +140,15 @@ static PyObject *SM9PrivateKey_decrypt_from_der(PyTypeObject *type,
   ret = sm9_enc_key_info_decrypt_from_der(
       &self->key, password, (const uint8_t **)&data, &c_data_length);
   if (ret != GMSSL_INNER_OK) {
+    Py_DECREF(self);
     PyErr_SetString(
         GmsslInnerError,
         "libgmssl inner error in sm9_enc_key_info_decrypt_from_der");
+    return NULL;
+  }
+  if (c_data_length != 0) {
+    Py_DECREF(self);
+    PyErr_SetString(InvalidValueError, "extra data after SM9 private key");
     return NULL;
   }
   return (PyObject *)self;
@@ -131,7 +157,7 @@ static PyObject *SM9PrivateKey_decrypt_from_der(PyTypeObject *type,
 static PyObject *SM9PrivateKey_encrypt_to_der(SM9PrivateKeyObject *self,
                                               PyObject *args,
                                               PyObject *keywds) {
-  const char *password;
+  const char *password = NULL;
   static char *kwlist[] = {"password", NULL};
   int ret;
 
@@ -139,6 +165,11 @@ static PyObject *SM9PrivateKey_encrypt_to_der(SM9PrivateKeyObject *self,
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &password)) {
     return NULL;
   }
+  if (password == NULL || strlen(password) == 0) {
+    PyErr_SetString(InvalidValueError, "empty password");
+    return NULL;
+  }
+
   // code from sm9_enc_key_info_encrypt_to_pem
   uint8_t buf[SM9_MAX_ENCED_PRIVATE_KEY_INFO_SIZE];
   uint8_t *p = buf;
@@ -155,8 +186,8 @@ static PyObject *SM9PrivateKey_encrypt_to_der(SM9PrivateKeyObject *self,
 static PyObject *SM9PrivateKey_decrypt_from_pem(PyTypeObject *type,
                                                 PyObject *args,
                                                 PyObject *keywds) {
-  const char *password;
-  const char *filepath;
+  const char *password = NULL;
+  const char *filepath = NULL;
   static char *kwlist[] = {"password", "filepath", NULL};
   int ret;
 
@@ -165,19 +196,30 @@ static PyObject *SM9PrivateKey_decrypt_from_pem(PyTypeObject *type,
                                    &filepath)) {
     return NULL;
   }
-  SM9PrivateKeyObject *self =
-      (SM9PrivateKeyObject *)PyObject_CallFunctionObjArgs((PyObject *)type,
-                                                          NULL);
-  if (self == NULL) {
+  if (password == NULL || strlen(password) == 0) {
+    PyErr_SetString(InvalidValueError, "empty password");
+    return NULL;
+  }
+  if (filepath == NULL || strlen(filepath) == 0) {
+    PyErr_SetString(InvalidValueError, "empty filepath");
     return NULL;
   }
   FILE *fp = fopen(filepath, "r");
   if (fp == NULL) {
-    PyErr_SetString(InvalidValueError, strerror(errno));
+    PyErr_SetFromErrnoWithFilename(InvalidValueError, filepath);
+    return NULL;
+  }
+
+  SM9PrivateKeyObject *self =
+      (SM9PrivateKeyObject *)PyObject_CallFunctionObjArgs((PyObject *)type,
+                                                          NULL);
+  if (self == NULL) {
+    fclose(fp);
     return NULL;
   }
   ret = sm9_enc_key_info_decrypt_from_pem(&self->key, password, fp);
   if (ret != GMSSL_INNER_OK) {
+    Py_DECREF(self);
     fclose(fp);
     PyErr_SetString(
         GmsslInnerError,
@@ -191,22 +233,30 @@ static PyObject *SM9PrivateKey_decrypt_from_pem(PyTypeObject *type,
 static PyObject *SM9PrivateKey_encrypt_to_pem(SM9PrivateKeyObject *self,
                                               PyObject *args,
                                               PyObject *keywds) {
-  const char *password;
-  const char *filepath;
+  const char *password = NULL;
+  const char *filepath = NULL;
   static char *kwlist[] = {"password", "filepath", NULL};
-  int ret;
 
   // decrypt_from_pem(cls, password: str, filepath: str) -> "SM9PrivateKey"
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss", kwlist, &password,
                                    &filepath)) {
     return NULL;
   }
-  FILE *fp = fopen(filepath, "w");
-  if (fp == NULL) {
-    PyErr_SetString(InvalidValueError, strerror(errno));
+  if (password == NULL || strlen(password) == 0) {
+    PyErr_SetString(InvalidValueError, "empty password");
     return NULL;
   }
-  ret = sm9_enc_key_info_encrypt_to_pem(&self->key, password, fp);
+  if (filepath == NULL || strlen(filepath) == 0) {
+    PyErr_SetString(InvalidValueError, "empty filepath");
+    return NULL;
+  }
+  FILE *fp = fopen(filepath, "w");
+  if (fp == NULL) {
+    PyErr_SetFromErrnoWithFilename(InvalidValueError, filepath);
+    return NULL;
+  }
+
+  int ret = sm9_enc_key_info_encrypt_to_pem(&self->key, password, fp);
   if (ret != GMSSL_INNER_OK) {
     fclose(fp);
     PyErr_SetString(GmsslInnerError,
@@ -220,10 +270,10 @@ static PyObject *SM9PrivateKey_encrypt_to_pem(SM9PrivateKeyObject *self,
 static PyObject *SM9PrivateKey_decrypt(SM9PrivateKeyObject *self,
                                        PyObject *args, PyObject *keywds) {
   int ok;
-  const char *identity;
-  Py_ssize_t identity_length;
-  const char *ciphertext;
-  Py_ssize_t ciphertext_length;
+  const char *identity = NULL;
+  Py_ssize_t identity_length = 0;
+  const char *ciphertext = NULL;
+  Py_ssize_t ciphertext_length = 0;
   static char *kwlist[] = {"identity", "ciphertext", NULL};
   // decrypt(self, identity: bytes, ciphertext: bytes) -> bytes
   ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#y#", kwlist, &identity,
@@ -232,13 +282,15 @@ static PyObject *SM9PrivateKey_decrypt(SM9PrivateKeyObject *self,
   if (!ok) {
     return NULL;
   }
-  if (ciphertext_length > SM9_MAX_CIPHERTEXT_SIZE) {
-    PyErr_SetString(InvalidValueError, "invalid sm9 ciphertext length");
+  if (identity_length <= 0 || ciphertext_length <= 0 ||
+      ciphertext_length > SM9_MAX_CIPHERTEXT_SIZE) {
+    PyErr_SetString(InvalidValueError,
+                    "invalid sm9 identity or ciphertext length");
     return NULL;
   }
 
   int ret;
-  char plaintext[SM9_MAX_PLAINTEXT_SIZE];
+  char plaintext[SM9_MAX_PLAINTEXT_SIZE + 1];
   size_t c_plaintext_length;
   ret =
       sm9_decrypt(&self->key, identity, identity_length, (uint8_t *)ciphertext,
@@ -311,7 +363,8 @@ PyTypeObject GmsslextSM9PrivateKeyType = {
 
 // SM9 master public key
 typedef struct {
-  PyObject_HEAD SM9_ENC_MASTER_KEY master_public;
+  PyObject_HEAD;
+  SM9_ENC_MASTER_KEY master_public;
 } SM9MasterPublicKeyObject;
 
 static void SM9MasterPublicKey_dealloc(SM9MasterPublicKeyObject *self) {
@@ -344,8 +397,8 @@ static PyMemberDef SM9MasterPublicKey_members[] = {
 
 static PyObject *SM9MasterPublicKey_from_der(PyTypeObject *type, PyObject *args,
                                              PyObject *keywds) {
-  const char *data;
-  Py_ssize_t data_length;
+  const char *data = NULL;
+  Py_ssize_t data_length = 0;
   static char *kwlist[] = {"data", NULL};
   int ret;
 
@@ -354,6 +407,11 @@ static PyObject *SM9MasterPublicKey_from_der(PyTypeObject *type, PyObject *args,
                                    &data_length)) {
     return NULL;
   }
+  if (data_length <= 0) {
+    PyErr_SetString(InvalidValueError, "empty data");
+    return NULL;
+  }
+
   SM9MasterPublicKeyObject *self =
       (SM9MasterPublicKeyObject *)PyObject_CallFunctionObjArgs((PyObject *)type,
                                                                NULL);
@@ -364,9 +422,16 @@ static PyObject *SM9MasterPublicKey_from_der(PyTypeObject *type, PyObject *args,
   ret = sm9_enc_master_public_key_from_der(
       &self->master_public, (const uint8_t **)&data, &c_data_length);
   if (ret != GMSSL_INNER_OK) {
+    Py_DECREF(self);
     PyErr_SetString(
         GmsslInnerError,
         "libgmssl inner error in sm9_enc_master_public_key_from_der");
+    return NULL;
+  }
+  if (c_data_length != 0) {
+    Py_DECREF(self);
+    PyErr_SetString(InvalidValueError,
+                    "extra data after SM9 master public key");
     return NULL;
   }
   return (PyObject *)self;
@@ -390,27 +455,34 @@ static PyObject *SM9MasterPublicKey_to_der(SM9MasterPublicKeyObject *self,
 
 static PyObject *SM9MasterPublicKey_from_pem(PyTypeObject *type, PyObject *args,
                                              PyObject *keywds) {
-  const char *filepath;
+  const char *filepath = NULL;
   static char *kwlist[] = {"filepath", NULL};
 
   // from_pem(cls, filepath: str) -> "SM9MasterPublicKey"
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &filepath)) {
     return NULL;
   }
+  if (filepath == NULL || strlen(filepath) == 0) {
+    PyErr_SetString(InvalidValueError, "empty filepath");
+    return NULL;
+  }
+  FILE *fp = fopen(filepath, "r");
+  if (fp == NULL) {
+    PyErr_SetFromErrnoWithFilename(InvalidValueError, filepath);
+    return NULL;
+  }
+
   SM9MasterPublicKeyObject *self =
       (SM9MasterPublicKeyObject *)PyObject_CallFunctionObjArgs((PyObject *)type,
                                                                NULL);
   if (self == NULL) {
+    fclose(fp);
     return NULL;
   }
 
-  FILE *fp = fopen(filepath, "r");
-  if (fp == NULL) {
-    PyErr_SetString(InvalidValueError, strerror(errno));
-    return NULL;
-  }
   int ret = sm9_enc_master_public_key_from_pem(&self->master_public, fp);
   if (ret != GMSSL_INNER_OK) {
+    Py_DECREF(self);
     fclose(fp);
     PyErr_SetString(
         GmsslInnerError,
@@ -423,16 +495,20 @@ static PyObject *SM9MasterPublicKey_from_pem(PyTypeObject *type, PyObject *args,
 
 static PyObject *SM9MasterPublicKey_to_pem(SM9MasterPublicKeyObject *self,
                                            PyObject *args, PyObject *keywds) {
-  const char *filepath;
+  const char *filepath = NULL;
   static char *kwlist[] = {"filepath", NULL};
 
   // to_pem(self, filepath: str) -> None
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &filepath)) {
     return NULL;
   }
+  if (filepath == NULL || strlen(filepath) == 0) {
+    PyErr_SetString(InvalidValueError, "empty filepath");
+    return NULL;
+  }
   FILE *fp = fopen(filepath, "w");
   if (fp == NULL) {
-    PyErr_SetString(InvalidValueError, strerror(errno));
+    PyErr_SetFromErrnoWithFilename(InvalidValueError, filepath);
     return NULL;
   }
   int ret = sm9_enc_master_public_key_to_pem(&self->master_public, fp);
@@ -450,10 +526,10 @@ static PyObject *SM9MasterPublicKey_encrypt(SM9MasterPublicKeyObject *self,
                                             PyObject *args, PyObject *keywds) {
   static char *kwlist[] = {"identity", "plaintext", NULL};
   int ok;
-  const char *identity;
-  Py_ssize_t identity_length;
-  const char *plaintext;
-  Py_ssize_t plaintext_length;
+  const char *identity = NULL;
+  Py_ssize_t identity_length = 0;
+  const char *plaintext = NULL;
+  Py_ssize_t plaintext_length = 0;
 
   // encrypt(self, identity: bytes, plaintext: bytes) -> bytes
   ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#y#", kwlist, &identity,
@@ -462,14 +538,14 @@ static PyObject *SM9MasterPublicKey_encrypt(SM9MasterPublicKeyObject *self,
   if (!ok) {
     return NULL;
   }
-
-  if (plaintext_length > SM9_MAX_PLAINTEXT_SIZE) {
+  if (identity_length <= 0 || plaintext_length <= 0 ||
+      plaintext_length > SM9_MAX_PLAINTEXT_SIZE) {
     PyErr_SetString(InvalidValueError, "invalid sm9 plaintext length");
     return NULL;
   }
 
   int ret;
-  char ciphertext[SM9_MAX_CIPHERTEXT_SIZE];
+  char ciphertext[SM9_MAX_CIPHERTEXT_SIZE + 1];
   size_t c_ciphertext_length;
   ret = sm9_encrypt(&self->master_public, identity, identity_length,
                     (uint8_t *)plaintext, plaintext_length,
@@ -531,7 +607,8 @@ PyTypeObject GmsslextSM9MasterPublicKeyType = {
 
 // SM9 master key
 typedef struct {
-  PyObject_HEAD SM9_ENC_MASTER_KEY master;
+  PyObject_HEAD;
+  SM9_ENC_MASTER_KEY master;
 } SM9MasterKeyObject;
 
 static void SM9MasterKey_dealloc(SM9MasterKeyObject *self) {
@@ -571,6 +648,7 @@ static PyObject *SM9MasterKey_generate(PyTypeObject *type,
   }
   int ret = sm9_enc_master_key_generate(&self->master);
   if (ret != GMSSL_INNER_OK) {
+    Py_DECREF(self);
     PyErr_SetString(GmsslInnerError,
                     "libgmssl inner error in sm9_enc_master_key_generate");
     return NULL;
@@ -582,13 +660,17 @@ static PyObject *SM9MasterKey_from_der(PyTypeObject *type, PyObject *args,
                                        PyObject *keywds) {
   int ok;
   static char *kwlist[] = {"data", NULL};
-  const char *data;
-  Py_ssize_t data_length;
+  const char *data = NULL;
+  Py_ssize_t data_length = 0;
 
   // from_der(cls, data: bytes) -> "SM9MasterKey"
   ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#", kwlist, &data,
                                    &data_length);
   if (!ok) {
+    return NULL;
+  }
+  if (data_length <= 0) {
+    PyErr_SetString(InvalidValueError, "empty data");
     return NULL;
   }
 
@@ -601,8 +683,14 @@ static PyObject *SM9MasterKey_from_der(PyTypeObject *type, PyObject *args,
   int ret = sm9_enc_master_key_from_der(&self->master, (const uint8_t **)&data,
                                         &c_data_length);
   if (ret != GMSSL_INNER_OK) {
+    Py_DECREF(self);
     PyErr_SetString(GmsslInnerError,
                     "libgmssl inner error in sm9_enc_master_key_from_der");
+    return NULL;
+  }
+  if (c_data_length != 0) {
+    Py_DECREF(self);
+    PyErr_SetString(InvalidValueError, "extra data after SM9 master key");
     return NULL;
   }
   return (PyObject *)self;
@@ -630,13 +718,21 @@ static PyObject *SM9MasterKey_decrypt_from_der(PyTypeObject *type,
                                                PyObject *keywds) {
   int ok;
   static char *kwlist[] = {"password", "data", NULL};
-  const char *password;
-  const char *data;
-  Py_ssize_t data_length;
+  const char *password = NULL;
+  const char *data = NULL;
+  Py_ssize_t data_length = 0;
   // decrypt_from_der(cls, password: bytes, data: bytes) -> "SM9MasterKey"
   ok = PyArg_ParseTupleAndKeywords(args, keywds, "sy#", kwlist, &password,
                                    &data, &data_length);
   if (!ok) {
+    return NULL;
+  }
+  if (password == NULL || strlen(password) == 0) {
+    PyErr_SetString(InvalidValueError, "empty password");
+    return NULL;
+  }
+  if (data_length <= 0) {
+    PyErr_SetString(InvalidValueError, "empty data");
     return NULL;
   }
 
@@ -649,9 +745,15 @@ static PyObject *SM9MasterKey_decrypt_from_der(PyTypeObject *type,
   int ret = sm9_enc_master_key_info_decrypt_from_der(
       &self->master, password, (const uint8_t **)&data, &c_data_length);
   if (ret != GMSSL_INNER_OK) {
+    Py_DECREF(self);
     PyErr_SetString(
         GmsslInnerError,
         "libgmssl inner error in sm9_enc_master_key_info_decrypt_from_der");
+    return NULL;
+  }
+  if (c_data_length != 0) {
+    Py_DECREF(self);
+    PyErr_SetString(InvalidValueError, "extra data after SM9 master key");
     return NULL;
   }
   return (PyObject *)self;
@@ -661,10 +763,14 @@ static PyObject *SM9MasterKey_encrypt_to_der(SM9MasterKeyObject *self,
                                              PyObject *args, PyObject *keywds) {
   int ok;
   static char *kwlist[] = {"password", NULL};
-  const char *password;
+  const char *password = NULL;
   // encrypt_to_der(self, password: str) -> bytes
   ok = PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &password);
   if (!ok) {
+    return NULL;
+  }
+  if (password == NULL || strlen(password) == 0) {
+    PyErr_SetString(InvalidValueError, "empty password");
     return NULL;
   }
 
@@ -688,28 +794,38 @@ static PyObject *SM9MasterKey_decrypt_from_pem(PyTypeObject *type,
                                                PyObject *args,
                                                PyObject *keywds) {
   static char *kwlist[] = {"password", "filepath", NULL};
-  const char *password;
-  const char *filepath;
+  const char *password = NULL;
+  const char *filepath = NULL;
   // decrypt_from_pem(cls, password: str, filepath: str) -> "SM9MasterKey"
   int ok = PyArg_ParseTupleAndKeywords(args, keywds, "ss", kwlist, &password,
                                        &filepath);
   if (!ok) {
     return NULL;
   }
-
-  SM9MasterKeyObject *self = (SM9MasterKeyObject *)PyObject_CallFunctionObjArgs(
-      (PyObject *)type, NULL);
-  if (self == NULL) {
+  if (password == NULL || strlen(password) == 0) {
+    PyErr_SetString(InvalidValueError, "empty password");
+    return NULL;
+  }
+  if (filepath == NULL || strlen(filepath) == 0) {
+    PyErr_SetString(InvalidValueError, "empty filepath");
     return NULL;
   }
   FILE *fp = fopen(filepath, "r");
   if (fp == NULL) {
-    PyErr_SetString(InvalidValueError, strerror(errno));
+    PyErr_SetFromErrnoWithFilename(InvalidValueError, filepath);
+    return NULL;
+  }
+
+  SM9MasterKeyObject *self = (SM9MasterKeyObject *)PyObject_CallFunctionObjArgs(
+      (PyObject *)type, NULL);
+  if (self == NULL) {
+    fclose(fp);
     return NULL;
   }
   int ret =
       sm9_enc_master_key_info_decrypt_from_pem(&self->master, password, fp);
   if (ret != GMSSL_INNER_OK) {
+    Py_DECREF(self);
     fclose(fp);
     PyErr_SetString(
         GmsslInnerError,
@@ -723,20 +839,28 @@ static PyObject *SM9MasterKey_decrypt_from_pem(PyTypeObject *type,
 static PyObject *SM9MasterKey_encrypt_to_pem(SM9MasterKeyObject *self,
                                              PyObject *args, PyObject *keywds) {
   static char *kwlist[] = {"password", "filepath", NULL};
-  const char *password;
-  const char *filepath;
+  const char *password = NULL;
+  const char *filepath = NULL;
   // encrypt_to_pem(self, password: str, filepath: str) -> "SM9MasterKey"
   int ok = PyArg_ParseTupleAndKeywords(args, keywds, "ss", kwlist, &password,
                                        &filepath);
   if (!ok) {
     return NULL;
   }
-
-  FILE *fp = fopen(filepath, "w");
-  if (fp == NULL) {
-    PyErr_SetString(InvalidValueError, strerror(errno));
+  if (password == NULL || strlen(password) == 0) {
+    PyErr_SetString(InvalidValueError, "empty password");
     return NULL;
   }
+  if (filepath == NULL || strlen(filepath) == 0) {
+    PyErr_SetString(InvalidValueError, "empty filepath");
+    return NULL;
+  }
+  FILE *fp = fopen(filepath, "w");
+  if (fp == NULL) {
+    PyErr_SetFromErrnoWithFilename(InvalidValueError, filepath);
+    return NULL;
+  }
+
   int ret = sm9_enc_master_key_info_encrypt_to_pem(&self->master, password, fp);
   if (ret != GMSSL_INNER_OK) {
     fclose(fp);
@@ -753,13 +877,17 @@ static PyObject *SM9MasterKey_extract_key(SM9MasterKeyObject *self,
                                           PyObject *args, PyObject *keywds) {
   int ok;
   static char *kwlist[] = {"identity", NULL};
-  const char *identity;
-  Py_ssize_t identity_length;
+  const char *identity = NULL;
+  Py_ssize_t identity_length = 0;
 
   // extract_key(self, identity: bytes) -> "SM9PrivateKey"
   ok = PyArg_ParseTupleAndKeywords(args, keywds, "y#", kwlist, &identity,
                                    &identity_length);
   if (!ok) {
+    return NULL;
+  }
+  if (identity_length <= 0) {
+    PyErr_SetString(InvalidValueError, "invalid identity length");
     return NULL;
   }
 
@@ -774,6 +902,7 @@ static PyObject *SM9MasterKey_extract_key(SM9MasterKeyObject *self,
   ret = sm9_enc_master_key_extract_key(&self->master, identity, identity_length,
                                        &private_key->key);
   if (ret != GMSSL_INNER_OK) {
+    Py_DECREF(private_key);
     PyErr_SetString(GmsslInnerError,
                     "libgmssl inner error in sm9_enc_master_key_extract_key");
     return NULL;
@@ -806,6 +935,7 @@ static PyObject *SM9MasterKey_public_key(SM9MasterKeyObject *self,
   ret =
       sm9_enc_master_public_key_from_der(&public_key->master_public, &cp, &len);
   if (ret != GMSSL_INNER_OK) {
+    Py_DECREF(public_key);
     PyErr_SetString(
         GmsslInnerError,
         "libgmssl inner error in sm9_enc_master_public_key_from_der");

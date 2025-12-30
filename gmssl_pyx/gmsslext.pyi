@@ -272,7 +272,7 @@ class SM9PrivateKey:
         """根据 pem 文件生成私钥"""
         ...
 
-    def encrypt_to_pem(cls, password: str, filepath: str) -> None:
+    def encrypt_to_pem(self, password: str, filepath: str) -> None:
         """将私钥数据写入指定文件"""
         ...
 
