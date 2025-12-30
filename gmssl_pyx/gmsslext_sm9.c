@@ -21,8 +21,7 @@
 
 // SM9 private key
 typedef struct {
-  PyObject_HEAD;
-  SM9_ENC_KEY key;
+  PyObject_HEAD SM9_ENC_KEY key;
 } SM9PrivateKeyObject;
 
 static void SM9PrivateKey_dealloc(SM9PrivateKeyObject *self) {
@@ -363,8 +362,7 @@ PyTypeObject GmsslextSM9PrivateKeyType = {
 
 // SM9 master public key
 typedef struct {
-  PyObject_HEAD;
-  SM9_ENC_MASTER_KEY master_public;
+  PyObject_HEAD SM9_ENC_MASTER_KEY master_public;
 } SM9MasterPublicKeyObject;
 
 static void SM9MasterPublicKey_dealloc(SM9MasterPublicKeyObject *self) {
@@ -607,8 +605,7 @@ PyTypeObject GmsslextSM9MasterPublicKeyType = {
 
 // SM9 master key
 typedef struct {
-  PyObject_HEAD;
-  SM9_ENC_MASTER_KEY master;
+  PyObject_HEAD SM9_ENC_MASTER_KEY master;
 } SM9MasterKeyObject;
 
 static void SM9MasterKey_dealloc(SM9MasterKeyObject *self) {
