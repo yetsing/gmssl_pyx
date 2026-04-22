@@ -27,6 +27,18 @@ jobs:
           - os: windows-latest
             python: 310
             platform_id: win_amd64
+          - os: windows-latest
+            python: 311
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 312
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 313
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 314
+            platform_id: win_amd64
 
           # Linux 64 bit manylinux
           - os: ubuntu-24.04
@@ -41,6 +53,22 @@ jobs:
             python: 310
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
+          - os: ubuntu-24.04
+            python: 311
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04
+            python: 312
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04
+            python: 313
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+          - os: ubuntu-24.04
+            python: 314
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
 
           # MacOS x86_64
           - os: macos-15-intel
@@ -51,6 +79,18 @@ jobs:
             platform_id: macosx_x86_64
           - os: macos-15-intel
             python: 310
+            platform_id: macosx_x86_64
+          - os: macos-15-intel
+            python: 311
+            platform_id: macosx_x86_64
+          - os: macos-15-intel
+            python: 312
+            platform_id: macosx_x86_64
+          - os: macos-15-intel
+            python: 313
+            platform_id: macosx_x86_64
+          - os: macos-15-intel
+            python: 314
             platform_id: macosx_x86_64
 
     steps:

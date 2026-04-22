@@ -66,6 +66,8 @@ def compile_gmssl():
 
     elif sys.platform.startswith("win"):
         pass
+        # 原因已经弄清，有个头文件部分 include 没有放到 include_guard 里，导致 windows 编译器报语法错误
+        # GmSSL 3.1.1 已经修复了这个问题，直接升级到 3.1.1 就好了，不需要下面的修改了
         # # 修改 sm2.h 内容，直接用 windows 编译会报语法错误
         # # 具体原因不清楚，不想深究了
         # filename = "include/gmssl/sm2.h"
