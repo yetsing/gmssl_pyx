@@ -6,6 +6,9 @@
 if [[ -f "venv/bin/activate" ]] && [ "${VIRTUAL_ENV}" == "" ]
 then
   source venv/bin/activate
+elif [[ -f ".venv/bin/activate" ]] && [ "${VIRTUAL_ENV}" == "" ]
+then
+  source .venv/bin/activate
 fi
 
 set -ex

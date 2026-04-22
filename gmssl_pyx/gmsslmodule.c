@@ -224,6 +224,13 @@ static PyObject *gmsslext_sm2_sign(PyObject *self, PyObject *args,
     signer_id_length = SM2_DEFAULT_ID_LENGTH;
   } else if (signer_id_obj != Py_None) {
     // 参数 signer_id 传的值不是 None
+    // 检查：确保输入是一个 bytes 对象
+    if (!PyBytes_Check(signer_id_obj)) {
+      // 设置一个类型错误异常
+      PyErr_SetString(PyExc_TypeError,
+                      "Expected a bytes object for 'signer_id'.");
+      return NULL; // 返回 NULL 表示函数执行失败
+    }
     signer_id_length = PyBytes_Size(signer_id_obj);
     if (signer_id_length <= 0 || signer_id_length > SM2_MAX_ID_LENGTH) {
       PyErr_SetString(InvalidValueError, "invalid signer_id length");
@@ -308,6 +315,13 @@ static PyObject *gmsslext_sm2_verify(PyObject *self, PyObject *args,
     signer_id_length = SM2_DEFAULT_ID_LENGTH;
   } else if (signer_id_obj != Py_None) {
     // 参数 signer_id 传的值不是 None
+    // 检查：确保输入是一个 bytes 对象
+    if (!PyBytes_Check(signer_id_obj)) {
+      // 设置一个类型错误异常
+      PyErr_SetString(PyExc_TypeError,
+                      "Expected a bytes object for 'signer_id'.");
+      return NULL; // 返回 NULL 表示函数执行失败
+    }
     signer_id = PyBytes_AsString(signer_id_obj);
     signer_id_length = PyBytes_Size(signer_id_obj);
     if (signer_id_length <= 0 || signer_id_length > SM2_MAX_ID_LENGTH) {
@@ -751,7 +765,7 @@ static PyObject *gmsslext_rand_bytes(PyObject *self, PyObject *args,
                                      PyObject *keywds) {
   int ok, n, ret;
   static char *kwlist[] = {"n", NULL};
-  ok = PyArg_ParseTupleAndKeywords(args, keywds, "I", kwlist, &n);
+  ok = PyArg_ParseTupleAndKeywords(args, keywds, "i", kwlist, &n);
   if (!ok) {
     return NULL;
   }
