@@ -3,7 +3,7 @@
 [![image](https://img.shields.io/pypi/v/gmssl_pyx.svg)](https://pypi.python.org/pypi/gmssl_pyx)
 [![image](https://img.shields.io/pypi/l/gmssl_pyx.svg)](https://pypi.python.org/pypi/gmssl_pyx)
 [![image](https://img.shields.io/pypi/pyversions/gmssl_pyx.svg)](https://pypi.python.org/pypi/gmssl_pyx)
-[![Actions status](https://github.com/yetsing/gmssl_pyx/actions/workflows/ci.yml/badge.svg)](https://github.com/yetsing/gmssl_pyx/actions)
+[![Actions status](https://github.com/yetsing/gmssl_pyx/actions/workflows/wheels.yml/badge.svg)](https://github.com/yetsing/gmssl_pyx/actions)
 
 python wrapper (C extension) of [GmSSL](https://github.com/guanzhi/GmSSL)
 
