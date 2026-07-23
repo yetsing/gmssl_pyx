@@ -202,7 +202,7 @@ static PyObject *SM9PrivateKey_decrypt_from_pem(PyTypeObject *type,
     PyErr_SetString(InvalidValueError, "empty filepath");
     return NULL;
   }
-  FILE *fp = fopen(filepath, "r");
+  FILE *fp = fopen(filepath, "rb");
   if (fp == NULL) {
     PyErr_SetFromErrnoWithFilename(InvalidValueError, filepath);
     return NULL;
@@ -248,7 +248,7 @@ static PyObject *SM9PrivateKey_encrypt_to_pem(SM9PrivateKeyObject *self,
     PyErr_SetString(InvalidValueError, "empty filepath");
     return NULL;
   }
-  FILE *fp = fopen(filepath, "w");
+  FILE *fp = fopen(filepath, "wb");
   if (fp == NULL) {
     PyErr_SetFromErrnoWithFilename(InvalidValueError, filepath);
     return NULL;
@@ -463,7 +463,7 @@ static PyObject *SM9MasterPublicKey_from_pem(PyTypeObject *type, PyObject *args,
     PyErr_SetString(InvalidValueError, "empty filepath");
     return NULL;
   }
-  FILE *fp = fopen(filepath, "r");
+  FILE *fp = fopen(filepath, "rb");
   if (fp == NULL) {
     PyErr_SetFromErrnoWithFilename(InvalidValueError, filepath);
     return NULL;
@@ -503,7 +503,7 @@ static PyObject *SM9MasterPublicKey_to_pem(SM9MasterPublicKeyObject *self,
     PyErr_SetString(InvalidValueError, "empty filepath");
     return NULL;
   }
-  FILE *fp = fopen(filepath, "w");
+  FILE *fp = fopen(filepath, "wb");
   if (fp == NULL) {
     PyErr_SetFromErrnoWithFilename(InvalidValueError, filepath);
     return NULL;
@@ -806,7 +806,7 @@ static PyObject *SM9MasterKey_decrypt_from_pem(PyTypeObject *type,
     PyErr_SetString(InvalidValueError, "empty filepath");
     return NULL;
   }
-  FILE *fp = fopen(filepath, "r");
+  FILE *fp = fopen(filepath, "rb");
   if (fp == NULL) {
     PyErr_SetFromErrnoWithFilename(InvalidValueError, filepath);
     return NULL;
@@ -851,7 +851,7 @@ static PyObject *SM9MasterKey_encrypt_to_pem(SM9MasterKeyObject *self,
     PyErr_SetString(InvalidValueError, "empty filepath");
     return NULL;
   }
-  FILE *fp = fopen(filepath, "w");
+  FILE *fp = fopen(filepath, "wb");
   if (fp == NULL) {
     PyErr_SetFromErrnoWithFilename(InvalidValueError, filepath);
     return NULL;
