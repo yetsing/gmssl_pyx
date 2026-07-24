@@ -648,3 +648,18 @@ class SM9CipherTest(unittest.TestCase):
             ciphertext = public_key.encrypt(identity, plaintext)
             got = private_key.decrypt(identity, ciphertext)
             self.assertEqual(got, plaintext)
+
+    def test_generated_master(self):
+        key_path = script_dir / "data" / "sm9_generated_key.json"
+        d = json.loads(key_path.read_text(encoding="utf-8"))
+        identity = bytes.fromhex(d["identity"])
+        password = d["password"]
+        public_key = SM9MasterPublicKey.from_pem(str(script_dir / "data" / "sm9_public.pem"))
+        master_key = SM9MasterKey.decrypt_from_pem(password, str(script_dir / "data" / "sm9_master.pem"))
+        key = master_key.extract_key(identity)
+        for _ in range(3):
+            n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
