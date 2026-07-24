@@ -1,17 +1,23 @@
+import json
 import os
 import secrets
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 from gmssl_pyx import (
     SM9_MAX_CIPHERTEXT_SIZE,
     SM9_MAX_PLAINTEXT_SIZE,
-    InvalidValueError,
     GmsslInnerError,
+    InvalidValueError,
     SM9MasterKey,
     SM9MasterPublicKey,
     SM9PrivateKey,
 )
+
+script_dir = Path(__file__).parent.resolve()
+TEST_CONCURRENT = bool(os.environ.get("TEST_CONCURRENT"))
 
 
 class SM9CipherTest(unittest.TestCase):
@@ -46,6 +52,27 @@ class SM9CipherTest(unittest.TestCase):
         got = key.decrypt(identity, ciphertext)
         self.assertEqual(got, plaintext)
 
+    @unittest.skipIf(not TEST_CONCURRENT, "Skip concurrent test")
+    def test_sm9_encrypt_and_decrypt_concurrent(self):
+        def _check(n: int):
+            identity = secrets.token_bytes(6)
+            master = SM9MasterKey.generate()
+            key = master.extract_key(identity)
+            public_key = master.public_key()
+
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            fs = []
+            for i in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+                fs.append(executor.submit(_check, i))
+
+            for f in fs:
+                f.result()
+
     def test_sm9_encrypt_and_decrypt_error(self):
         identity = secrets.token_bytes(6)
 
@@ -61,12 +88,16 @@ class SM9CipherTest(unittest.TestCase):
         ciphertext = secrets.token_bytes(SM9_MAX_CIPHERTEXT_SIZE - 1)
         with self.assertRaises(InvalidValueError) as cm:
             key.decrypt(b"", ciphertext)
-            self.assertEqual(str(cm.exception), "invalid sm9 identity or ciphertext length")
+            self.assertEqual(
+                str(cm.exception), "invalid sm9 identity or ciphertext length"
+            )
 
         ciphertext = secrets.token_bytes(SM9_MAX_CIPHERTEXT_SIZE + 1)
         with self.assertRaises(InvalidValueError) as cm:
             key.decrypt(identity, ciphertext)
-            self.assertEqual(str(cm.exception), "invalid sm9 identity or ciphertext length")
+            self.assertEqual(
+                str(cm.exception), "invalid sm9 identity or ciphertext length"
+            )
 
     @unittest.skip("Skip because of known issue")
     def test_sm9_master_key_der(self):
@@ -113,6 +144,27 @@ class SM9CipherTest(unittest.TestCase):
         with self.assertRaises(GmsslInnerError):
             SM9MasterKey.from_der(b"")
 
+    @unittest.skipIf(not TEST_CONCURRENT, "Skip concurrent test")
+    def test_sm9_master_key_der_concurrent(self):
+        def _check(n: int):
+            identity = secrets.token_bytes(6)
+            master = SM9MasterKey.generate()
+            key = master.extract_key(identity)
+            public_key = master.public_key()
+
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            fs = []
+            for i in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+                fs.append(executor.submit(_check, i))
+
+            for f in fs:
+                f.result()
+
     def test_sm9_master_key_pem(self):
         identity = secrets.token_bytes(6)
 
@@ -156,6 +208,27 @@ class SM9CipherTest(unittest.TestCase):
             SM9MasterKey.decrypt_from_pem(password, "non_exist_file.pem")
         with self.assertRaises(InvalidValueError):
             SM9MasterKey.decrypt_from_pem(password, "")
+
+    @unittest.skipIf(not TEST_CONCURRENT, "Skip concurrent test")
+    def test_sm9_master_key_pem_concurrent(self):
+        def _check(n: int):
+            identity = secrets.token_bytes(6)
+            master = SM9MasterKey.generate()
+            key = master.extract_key(identity)
+            public_key = master.public_key()
+
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            fs = []
+            for i in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+                fs.append(executor.submit(_check, i))
+
+            for f in fs:
+                f.result()
 
     @unittest.skip("Skip because of known issue")
     def test_sm9_master_key_encrypt_der(self):
@@ -201,6 +274,27 @@ class SM9CipherTest(unittest.TestCase):
         with self.assertRaises(InvalidValueError):
             SM9MasterKey.decrypt_from_der("", b"")
 
+    @unittest.skipIf(not TEST_CONCURRENT, "Skip concurrent test")
+    def test_sm9_master_key_encrypt_der_concurrent(self):
+        def _check(n: int):
+            identity = secrets.token_bytes(6)
+            master = SM9MasterKey.generate()
+            key = master.extract_key(identity)
+            public_key = master.public_key()
+
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            fs = []
+            for i in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+                fs.append(executor.submit(_check, i))
+
+            for f in fs:
+                f.result()
+
     def test_public_key_der(self):
         identity = secrets.token_bytes(6)
 
@@ -229,6 +323,27 @@ class SM9CipherTest(unittest.TestCase):
         pkey_der2 = public_key.to_der()
         self.assertEqual(pkey_der, pkey_der2)
 
+    @unittest.skipIf(not TEST_CONCURRENT, "Skip concurrent test")
+    def test_public_key_der_concurrent(self):
+        def _check(n: int):
+            identity = secrets.token_bytes(6)
+            master = SM9MasterKey.generate()
+            key = master.extract_key(identity)
+            public_key = master.public_key()
+
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            fs = []
+            for i in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+                fs.append(executor.submit(_check, i))
+
+            for f in fs:
+                f.result()
+
     def test_public_key_pem(self):
         identity = secrets.token_bytes(6)
 
@@ -248,7 +363,7 @@ class SM9CipherTest(unittest.TestCase):
         got = key.decrypt(identity, ciphertext)
         self.assertEqual(got, plaintext)
 
-        pem_filename = "sm9_public.pem"
+        pem_filename = f"sm9_public_{secrets.token_hex(16)}.pem"
         public_key.to_pem(pem_filename)
         public_key = SM9MasterPublicKey.from_pem(pem_filename)
         ciphertext = public_key.encrypt(identity, plaintext)
@@ -259,6 +374,27 @@ class SM9CipherTest(unittest.TestCase):
             SM9MasterPublicKey.from_pem("")
         with self.assertRaises(InvalidValueError):
             SM9MasterPublicKey.from_pem("non_exist_file.pem")
+
+    @unittest.skipIf(not TEST_CONCURRENT, "Skip concurrent test")
+    def test_public_key_pem_concurrent(self):
+        def _check(n: int):
+            identity = secrets.token_bytes(6)
+            master = SM9MasterKey.generate()
+            key = master.extract_key(identity)
+            public_key = master.public_key()
+
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            fs = []
+            for i in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+                fs.append(executor.submit(_check, i))
+
+            for f in fs:
+                f.result()
 
     def test_private_key_der(self):
         identity = secrets.token_bytes(6)
@@ -294,6 +430,27 @@ class SM9CipherTest(unittest.TestCase):
         with self.assertRaises(GmsslInnerError):
             SM9PrivateKey.from_der(b"\x00" * 10)
 
+    @unittest.skipIf(not TEST_CONCURRENT, "Skip concurrent test")
+    def test_private_key_der_concurrent(self):
+        def _check(n: int):
+            identity = secrets.token_bytes(6)
+            master = SM9MasterKey.generate()
+            key = master.extract_key(identity)
+            public_key = master.public_key()
+
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            fs = []
+            for i in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+                fs.append(executor.submit(_check, i))
+
+            for f in fs:
+                f.result()
+
     def test_private_key_pem(self):
         identity = secrets.token_bytes(6)
 
@@ -314,7 +471,7 @@ class SM9CipherTest(unittest.TestCase):
         self.assertEqual(got, plaintext)
 
         password = "password"
-        pem_filename = "sm9_private.pem"
+        pem_filename = f"sm9_private_{secrets.token_hex(16)}.pem"
         key.encrypt_to_pem(password, pem_filename)
         key = SM9PrivateKey.decrypt_from_pem(password, pem_filename)
         got = key.decrypt(identity, ciphertext)
@@ -326,6 +483,27 @@ class SM9CipherTest(unittest.TestCase):
             SM9PrivateKey.decrypt_from_pem(password, "non_exist_file.pem")
         with self.assertRaises(InvalidValueError):
             SM9PrivateKey.decrypt_from_pem(password, "")
+
+    @unittest.skipIf(not TEST_CONCURRENT, "Skip concurrent test")
+    def test_private_key_pem_concurrent(self):
+        def _check(n: int):
+            identity = secrets.token_bytes(6)
+            master = SM9MasterKey.generate()
+            key = master.extract_key(identity)
+            public_key = master.public_key()
+
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            fs = []
+            for i in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+                fs.append(executor.submit(_check, i))
+
+            for f in fs:
+                f.result()
 
     def test_private_key_encrypt_der(self):
         identity = secrets.token_bytes(6)
@@ -360,3 +538,113 @@ class SM9CipherTest(unittest.TestCase):
             SM9PrivateKey.decrypt_from_der("", pkey_der)
         with self.assertRaises(InvalidValueError):
             SM9PrivateKey.decrypt_from_der(password, pkey_der + b"\x03")
+
+    @unittest.skipIf(not TEST_CONCURRENT, "Skip concurrent test")
+    def test_private_key_encrypt_der_concurrent(self):
+        def _check(n: int):
+            identity = secrets.token_bytes(6)
+            master = SM9MasterKey.generate()
+            key = master.extract_key(identity)
+            public_key = master.public_key()
+
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            fs = []
+            for i in range(1, SM9_MAX_PLAINTEXT_SIZE + 1):
+                fs.append(executor.submit(_check, i))
+
+            for f in fs:
+                f.result()
+
+    def test_master_key_der(self):
+        identity = secrets.token_bytes(6)
+        master = SM9MasterKey.generate()
+        public_key = master.public_key()
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
+        plaintext = secrets.token_bytes(n)
+        ciphertext = public_key.encrypt(identity, plaintext)
+
+        der = master.to_der()
+        master2 = SM9MasterKey.from_der(der)
+        self.assertEqual(master.to_der(), master2.to_der())
+        key = master2.extract_key(identity)
+        got = key.decrypt(identity, ciphertext)
+        self.assertEqual(got, plaintext)
+
+    def test_master_key_encrypted_der(self):
+        identity = secrets.token_bytes(6)
+        master = SM9MasterKey.generate()
+        public_key = master.public_key()
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
+        plaintext = secrets.token_bytes(n)
+        ciphertext = public_key.encrypt(identity, plaintext)
+
+        password = "password"
+        der = master.encrypt_to_der(password)
+        master2 = SM9MasterKey.decrypt_from_der(password, der)
+        self.assertEqual(master.to_der(), master2.to_der())
+        key = master2.extract_key(identity)
+        got = key.decrypt(identity, ciphertext)
+        self.assertEqual(got, plaintext)
+
+    def test_master_key_pem(self):
+        identity = secrets.token_bytes(6)
+        master = SM9MasterKey.generate()
+        public_key = master.public_key()
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
+        plaintext = secrets.token_bytes(n)
+        ciphertext = public_key.encrypt(identity, plaintext)
+
+        password = "password"
+        pem_filename = f"sm9_master_{secrets.token_hex(16)}.pem"
+        master.encrypt_to_pem(password, pem_filename)
+        master2 = SM9MasterKey.decrypt_from_pem(password, pem_filename)
+        self.assertEqual(master.to_der(), master2.to_der())
+        key = master2.extract_key(identity)
+        got = key.decrypt(identity, ciphertext)
+        self.assertEqual(got, plaintext)
+
+    def test_generated_pem(self):
+        key_path = script_dir / "data" / "sm9_generated_key.json"
+        d = json.loads(key_path.read_text(encoding="utf-8"))
+        identity = bytes.fromhex(d["identity"])
+        password = d["password"]
+        public_pem_filename = script_dir / "data" / "sm9_public.pem"
+        private_pem_filename = script_dir / "data" / "sm9_private.pem"
+        public_key = SM9MasterPublicKey.from_pem(str(public_pem_filename))
+        private_key = SM9PrivateKey.decrypt_from_pem(password, str(private_pem_filename))
+        for _ in range(3):
+            n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = private_key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+    def test_generated_der(self):
+        key_path = script_dir / "data" / "sm9_generated_key.json"
+        d = json.loads(key_path.read_text(encoding="utf-8"))
+        identity = bytes.fromhex(d["identity"])
+        password = d["password"]
+        public_der = bytes.fromhex(d["public_key"])
+        private_der = bytes.fromhex(d["private_key"])
+        private_der_encrypted = bytes.fromhex(d["private_key_encrypted"])
+        public_key = SM9MasterPublicKey.from_der(public_der)
+        private_key = SM9PrivateKey.from_der(private_der)
+        for _ in range(3):
+            n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = private_key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+        private_key = SM9PrivateKey.decrypt_from_der(password, private_der_encrypted)
+        for _ in range(3):
+            n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
+            plaintext = secrets.token_bytes(n)
+            ciphertext = public_key.encrypt(identity, plaintext)
+            got = private_key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)

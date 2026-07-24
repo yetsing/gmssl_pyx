@@ -1,6 +1,8 @@
+import json
 import random
 import secrets
 import unittest
+from pathlib import Path
 
 from gmssl_pyx import (
     GmsslInnerError,
@@ -15,6 +17,8 @@ from gmssl_pyx import (
     sm2_verify,
     sm2_verify_sm3_digest,
 )
+
+script_dir = Path(__file__).parent.resolve()
 
 
 class SM2TestCase(unittest.TestCase):
@@ -213,3 +217,49 @@ class SM2TestCase(unittest.TestCase):
         with self.assertRaises(InvalidValueError) as cm:
             rand_bytes(257)
         self.assertEqual(str(cm.exception), "n must in [1, 256]")
+
+    def test_generated_key(self):
+        key_path = script_dir / "data" / "sm2_generated_key.json"
+        d = json.loads(key_path.read_text(encoding="utf-8"))
+        for item in d:
+            public_key = bytes.fromhex(item["public_key"])
+            private_key = bytes.fromhex(item["private_key"])
+
+            # 加解密
+            n = random.randint(1, 255)
+            plaintext = secrets.token_bytes(n)
+            ciphertext = sm2_encrypt(public_key, plaintext)
+            decrypted = sm2_decrypt(private_key, ciphertext)
+            self.assertEqual(plaintext, decrypted)
+
+            # 签名验签
+            message_length = random.randint(1, 1024)
+            message = secrets.token_bytes(message_length)
+            # use default signer_id
+            signature = sm2_sign(private_key, public_key, message)
+            verify = sm2_verify(public_key, message, signature)
+            self.assertTrue(verify)
+            # without signer_id
+            signature = sm2_sign(private_key, public_key, message, signer_id=None)
+            verify = sm2_verify(public_key, message, signature, signer_id=None)
+            self.assertTrue(verify)
+            # random signer_id
+            signer_id = secrets.token_bytes(16)
+            signature = sm2_sign(
+                private_key, public_key, message=message, signer_id=signer_id
+            )
+            verify = sm2_verify(
+                public_key,
+                message=message,
+                signature=signature,
+                signer_id=signer_id,
+            )
+            self.assertTrue(verify)
+
+            # sm3 digest 签名验签
+            digest = secrets.token_bytes(32)
+            # args 传参
+            signature = sm2_sign_sm3_digest(private_key, digest)
+            self.assertTrue(
+                sm2_verify_sm3_digest(public_key, digest, signature),
+            )
