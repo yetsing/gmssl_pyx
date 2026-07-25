@@ -263,3 +263,38 @@ class SM2TestCase(unittest.TestCase):
             self.assertTrue(
                 sm2_verify_sm3_digest(public_key, digest, signature),
             )
+
+            encrypted_data = item["encrypted_data"]
+            for d in encrypted_data:
+                plaintext = bytes.fromhex(d["plaintext"])
+                ciphertext = bytes.fromhex(d["ciphertext"])
+                decrypted = sm2_decrypt(private_key, ciphertext)
+                self.assertEqual(plaintext, decrypted)
+            signed_digests = item["signed_digests"]
+            for d in signed_digests:
+                digest = bytes.fromhex(d["digest"])
+                signature = bytes.fromhex(d["signature"])
+                self.assertTrue(
+                    sm2_verify_sm3_digest(public_key, digest, signature),
+                )
+            signed_data = item["signed_data"]
+            for d in signed_data:
+                message = bytes.fromhex(d["message"])
+                signature = bytes.fromhex(d["signature"])
+                if "signer_id" in d:
+                    signer_id = d.get("signer_id")
+                    if signer_id is not None:
+                        signer_id = bytes.fromhex(signer_id)
+                    verify = sm2_verify(
+                        public_key,
+                        message=message,
+                        signature=signature,
+                        signer_id=signer_id,
+                    )
+                else:
+                    verify = sm2_verify(
+                        public_key,
+                        message=message,
+                        signature=signature,
+                    )
+                self.assertTrue(verify)

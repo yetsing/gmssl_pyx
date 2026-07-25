@@ -616,11 +616,20 @@ class SM9CipherTest(unittest.TestCase):
         public_pem_filename = script_dir / "data" / "sm9_public.pem"
         private_pem_filename = script_dir / "data" / "sm9_private.pem"
         public_key = SM9MasterPublicKey.from_pem(str(public_pem_filename))
-        private_key = SM9PrivateKey.decrypt_from_pem(password, str(private_pem_filename))
+        private_key = SM9PrivateKey.decrypt_from_pem(
+            password, str(private_pem_filename)
+        )
         for _ in range(3):
             n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
             plaintext = secrets.token_bytes(n)
             ciphertext = public_key.encrypt(identity, plaintext)
+            got = private_key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+        encrypted_data = d["encrypted_data"]
+        for data in encrypted_data:
+            plaintext = bytes.fromhex(data["plaintext"])
+            ciphertext = bytes.fromhex(data["ciphertext"])
             got = private_key.decrypt(identity, ciphertext)
             self.assertEqual(got, plaintext)
 
@@ -649,17 +658,35 @@ class SM9CipherTest(unittest.TestCase):
             got = private_key.decrypt(identity, ciphertext)
             self.assertEqual(got, plaintext)
 
+        encrypted_data = d["encrypted_data"]
+        for data in encrypted_data:
+            plaintext = bytes.fromhex(data["plaintext"])
+            ciphertext = bytes.fromhex(data["ciphertext"])
+            got = private_key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
     def test_generated_master(self):
         key_path = script_dir / "data" / "sm9_generated_key.json"
         d = json.loads(key_path.read_text(encoding="utf-8"))
         identity = bytes.fromhex(d["identity"])
         password = d["password"]
-        public_key = SM9MasterPublicKey.from_pem(str(script_dir / "data" / "sm9_public.pem"))
-        master_key = SM9MasterKey.decrypt_from_pem(password, str(script_dir / "data" / "sm9_master.pem"))
+        public_key = SM9MasterPublicKey.from_pem(
+            str(script_dir / "data" / "sm9_public.pem")
+        )
+        master_key = SM9MasterKey.decrypt_from_pem(
+            password, str(script_dir / "data" / "sm9_master.pem")
+        )
         key = master_key.extract_key(identity)
         for _ in range(3):
             n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
             plaintext = secrets.token_bytes(n)
             ciphertext = public_key.encrypt(identity, plaintext)
+            got = key.decrypt(identity, ciphertext)
+            self.assertEqual(got, plaintext)
+
+        encrypted_data = d["encrypted_data"]
+        for data in encrypted_data:
+            plaintext = bytes.fromhex(data["plaintext"])
+            ciphertext = bytes.fromhex(data["ciphertext"])
             got = key.decrypt(identity, ciphertext)
             self.assertEqual(got, plaintext)

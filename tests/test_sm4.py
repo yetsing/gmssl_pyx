@@ -1,6 +1,8 @@
+import json
 import random
 import secrets
 import unittest
+from pathlib import Path
 
 from gmssl_pyx import (
     SM4_BLOCK_SIZE,
@@ -13,6 +15,8 @@ from gmssl_pyx import (
     sm4_gcm_decrypt,
     sm4_gcm_encrypt,
 )
+
+script_dir = Path(__file__).parent.resolve()
 
 
 class SM4TestCase(unittest.TestCase):
@@ -146,3 +150,45 @@ class SM4TestCase(unittest.TestCase):
         with self.assertRaises(InvalidValueError) as cm:
             sm4_gcm_decrypt(key, iv, aad, b"", tag=secrets.token_bytes(16))
         self.assertEqual(str(cm.exception), "empty ciphertext")
+
+    def test_cbc_generated_data(self):
+        key_path = script_dir / "data" / "sm4_generated_key.json"
+        d = json.loads(key_path.read_text(encoding="utf-8"))
+        cbc_data = d["cbc"]
+        for data in cbc_data:
+            key = bytes.fromhex(data["key"])
+            iv = bytes.fromhex(data["iv"])
+            plaintext = bytes.fromhex(data["plaintext"])
+            ciphertext = bytes.fromhex(data["ciphertext"])
+            got_plaintext = sm4_cbc_padding_decrypt(
+                key=key, iv=iv, ciphertext=ciphertext
+            )
+            self.assertEqual(got_plaintext, plaintext)
+
+    def test_ctr_generated_data(self):
+        key_path = script_dir / "data" / "sm4_generated_key.json"
+        d = json.loads(key_path.read_text(encoding="utf-8"))
+        ctr_data = d["ctr"]
+        for data in ctr_data:
+            key = bytes.fromhex(data["key"])
+            ctr = bytes.fromhex(data["ctr"])
+            plaintext = bytes.fromhex(data["plaintext"])
+            ciphertext = bytes.fromhex(data["ciphertext"])
+            got_plaintext = sm4_ctr_decrypt(key=key, ctr=ctr, ciphertext=ciphertext)
+            self.assertEqual(got_plaintext, plaintext)
+
+    def test_gcm_generated_data(self):
+        key_path = script_dir / "data" / "sm4_generated_key.json"
+        d = json.loads(key_path.read_text(encoding="utf-8"))
+        gcm_data = d["gcm"]
+        for data in gcm_data:
+            key = bytes.fromhex(data["key"])
+            iv = bytes.fromhex(data["iv"])
+            aad = bytes.fromhex(data["aad"])
+            plaintext = bytes.fromhex(data["plaintext"])
+            ciphertext = bytes.fromhex(data["ciphertext"])
+            tag = bytes.fromhex(data["tag"])
+            got_plaintext = sm4_gcm_decrypt(
+                key, iv=iv, aad=aad, ciphertext=ciphertext, tag=tag
+            )
+            self.assertEqual(got_plaintext, plaintext)
