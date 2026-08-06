@@ -8,11 +8,31 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "gmssl/sm9.h"
+#include "gmssl/pem.h"
+#include "gmssl/asn1.h"
 
 #include "gmsslext.h"
 #include "gmsslext_sm9.h"
+
+static bool pem_starts_with(FILE *fp, const char *prefix) {
+    if (!fp || !prefix) return false;
+
+    size_t len = strlen(prefix);
+    if (len == 0) return true;
+
+    char buffer[128];  // 足够大
+    size_t read_len = fread(buffer, 1, len, fp);
+
+    // 重置文件指针到开头（重要！）
+    rewind(fp);
+
+    if (read_len != len) return false;
+
+    return memcmp(buffer, prefix, len) == 0;
+}
 
 /*
  * SM9 wrapper
@@ -181,6 +201,20 @@ static PyObject *SM9PrivateKey_encrypt_to_der(SM9PrivateKeyObject *self,
   return Py_BuildValue("y#", (char *)buf, (Py_ssize_t)len);
 }
 
+static int sm9_enc_key_info_decrypt_from_pem_v3_1_1(SM9_ENC_KEY *key, const char *pass, FILE *fp)
+{
+    uint8_t buf[SM9_MAX_ENCED_PRIVATE_KEY_INFO_SIZE];
+    const uint8_t *cp = buf;
+    size_t len;
+
+    if (pem_read(fp, PEM_SM9_ENC_PRIVATE_KEY_V3_1_1, buf, &len, sizeof(buf)) != 1
+        || sm9_enc_key_info_decrypt_from_der(key, pass, &cp, &len) != 1
+        || asn1_length_is_zero(len) != 1) {
+        return -1;
+    }
+    return 1;
+}
+
 static PyObject *SM9PrivateKey_decrypt_from_pem(PyTypeObject *type,
                                                 PyObject *args,
                                                 PyObject *keywds) {
@@ -215,7 +249,13 @@ static PyObject *SM9PrivateKey_decrypt_from_pem(PyTypeObject *type,
     fclose(fp);
     return NULL;
   }
-  ret = sm9_enc_key_info_decrypt_from_pem(&self->key, password, fp);
+  char begin_line[80];
+  snprintf(begin_line, sizeof(begin_line), "-----BEGIN %s-----", PEM_SM9_ENC_PRIVATE_KEY_V3_1_1);
+  if (pem_starts_with(fp, begin_line)) {
+    ret = sm9_enc_key_info_decrypt_from_pem_v3_1_1(&self->key, password, fp);
+  } else {
+    ret = sm9_enc_key_info_decrypt_from_pem(&self->key, password, fp);
+  }
   if (ret != GMSSL_INNER_OK) {
     Py_DECREF(self);
     fclose(fp);
@@ -786,6 +826,20 @@ static PyObject *SM9MasterKey_encrypt_to_der(SM9MasterKeyObject *self,
   return Py_BuildValue("y#", buf, (Py_ssize_t)len);
 }
 
+int sm9_enc_master_key_info_decrypt_from_pem_v3_1_1(SM9_ENC_MASTER_KEY *msk, const char *pass, FILE *fp)
+{
+	uint8_t buf[SM9_MAX_ENCED_PRIVATE_KEY_INFO_SIZE];
+	const uint8_t *cp = buf;
+	size_t len;
+
+	if (pem_read(fp, PEM_SM9_ENC_MASTER_KEY_V3_1_1, buf, &len, sizeof(buf)) != 1
+		|| sm9_enc_master_key_info_decrypt_from_der(msk, pass, &cp, &len) != 1
+		|| asn1_length_is_zero(len) != 1) {
+		return -1;
+	}
+	return 1;
+}
+
 static PyObject *SM9MasterKey_decrypt_from_pem(PyTypeObject *type,
                                                PyObject *args,
                                                PyObject *keywds) {
@@ -818,8 +872,14 @@ static PyObject *SM9MasterKey_decrypt_from_pem(PyTypeObject *type,
     fclose(fp);
     return NULL;
   }
-  int ret =
-      sm9_enc_master_key_info_decrypt_from_pem(&self->master, password, fp);
+  int ret;
+  char begin_line[80];
+  snprintf(begin_line, sizeof(begin_line), "-----BEGIN %s-----", PEM_SM9_ENC_MASTER_KEY_V3_1_1);
+  if (pem_starts_with(fp, begin_line)) {
+    ret = sm9_enc_master_key_info_decrypt_from_pem_v3_1_1(&self->master, password, fp);
+  } else {
+    ret = sm9_enc_master_key_info_decrypt_from_pem(&self->master, password, fp);
+  }
   if (ret != GMSSL_INNER_OK) {
     Py_DECREF(self);
     fclose(fp);
