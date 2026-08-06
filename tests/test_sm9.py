@@ -295,6 +295,20 @@ class SM9CipherTest(unittest.TestCase):
             for f in fs:
                 f.result()
 
+    @unittest.skip("Skip because of known issue")
+    def test_issue_1884(self):
+        master_der = bytes.fromhex("306602200084509d9f11799ba847a142b4c1ed860dd66943ecf79f544d4327882beb229d03420004654a84a614e4e3f670152a4253ef8fe5127ad7a5b0d85a6a009b3a95dadfb25d407d04cf4d90c3addd3b9829ed92a37d1be32af3ae32e5cb3b6fd5a1ddb8fa2c")
+        identity = secrets.token_bytes(6)
+        master = SM9MasterKey.from_der(master_der)
+        key = master.extract_key(identity)
+        public_key = master.public_key()
+
+        n = secrets.randbelow(SM9_MAX_PLAINTEXT_SIZE) + 1
+        plaintext = secrets.token_bytes(n)
+        ciphertext = public_key.encrypt(identity, plaintext)
+        got = key.decrypt(identity, ciphertext)
+        self.assertEqual(got, plaintext)
+
     def test_public_key_der(self):
         identity = secrets.token_bytes(6)
 

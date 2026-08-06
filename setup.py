@@ -57,10 +57,11 @@ def compile_gmssl():
         text = text.replace("rand_unix.c", "rand.c")
         # 根据错误说明增加编译选项 -fPIC ，加在 "project(GmSSL)" 后面
         append_text = "add_compile_options(-fPIC)"
-        text = text.replace(
-            "project(GmSSL C)",
-            "project(GmSSL C)\n\n{}\n\n".format(append_text),
-        )
+        if append_text not in text:
+            text = text.replace(
+                "project(GmSSL C)",
+                "project(GmSSL C)\n\n{}\n\n".format(append_text),
+            )
         with open(cmake_filename, "w", encoding=utf8) as f:
             f.write(text)
 
