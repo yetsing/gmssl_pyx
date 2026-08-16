@@ -790,6 +790,10 @@ static PyObject *gmsslext_sm4_gcm_decrypt(PyObject *self, PyObject *args,
     PyErr_SetString(InvalidValueError, "empty ciphertext");
     return NULL;
   }
+  if (tag_length < SM4_GCM_MIN_TAG_SIZE || tag_length > SM4_GCM_MAX_TAG_SIZE) {
+    PyErr_SetString(InvalidValueError, "invalid sm4 tag length");
+    return NULL;
+  }
 
   SM4_KEY sm4_key;
   // 密文长度与明文一致
@@ -804,7 +808,8 @@ static PyObject *gmsslext_sm4_gcm_decrypt(PyObject *self, PyObject *args,
                       (uint8_t *)tag, tag_length, (uint8_t *)out);
   if (ret != GMSSL_INNER_OK) {
     PyMem_RawFree(out);
-    PyErr_SetString(GmsslInnerError, "libgmssl inner error in sm4_gcm_decrypt");
+    // key/iv/tag 长度都已在上面校验，这里失败只可能是 tag 不匹配（认证失败）
+    PyErr_SetString(InvalidValueError, "authentication failed");
     return NULL;
   }
   PyObject *obj = Py_BuildValue("y#", out, ciphertext_length);

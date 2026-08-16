@@ -223,9 +223,11 @@ def sm4_gcm_decrypt(
         iv: 初始化向量，也被叫做 nonce ，1 <= 长度 <= 64
         aad: 附加数据，也被叫做 associated_data
         ciphertext: 密文数据
-        tag: 标签
+        tag: 标签，12 <= 长度 <= 16
 
     Returns: 明文数据
+
+    Raises: InvalidValueError: tag 长度非法或 tag 不匹配（认证失败）
     """
     ...
 
@@ -259,7 +261,7 @@ class SM9PrivateKey:
             password: 密码
             data: 加密的 ASN.1 DER 编码数据
 
-        Return: 私钥
+        Returns: 私钥
         """
         ...
 
@@ -347,7 +349,7 @@ class SM9MasterKey:
             password: 密码
             data: 加密的 ASN.1 DER 编码数据
 
-        Return: 主密钥
+        Returns: 主密钥
         """
         ...
 
@@ -363,7 +365,7 @@ class SM9MasterKey:
             password: 密码
             filepath: 文件路径
 
-        Return: 主密钥
+        Returns: 主密钥
         """
 
     def encrypt_to_pem(self, password: str, filepath: str) -> None:

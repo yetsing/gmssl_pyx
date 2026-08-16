@@ -245,6 +245,14 @@ class SM2TestCase(unittest.TestCase):
             normalize_sm2_public_key(b"\x00" + b"\x01" * 32)
         with self.assertRaises(InvalidValueError):
             normalize_sm2_public_key(b"\x04" + b"\x01" * 32)
+        # 64 字节原始公钥不在曲线上（含全零 = 无穷远点）
+        with self.assertRaises(InvalidValueError):
+            normalize_sm2_public_key(b"\xff" * 64)
+        with self.assertRaises(InvalidValueError):
+            normalize_sm2_public_key(b"\x00" * 64)
+        # 65 字节非压缩公钥（0x04 前缀）不在曲线上
+        with self.assertRaises(InvalidValueError):
+            normalize_sm2_public_key(b"\x04" + b"\xff" * 64)
         # 非法 hex 字符串
         with self.assertRaises(InvalidValueError):
             normalize_sm2_public_key("zz")

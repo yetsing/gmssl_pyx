@@ -162,6 +162,31 @@ class SM4TestCase(unittest.TestCase):
             sm4_gcm_decrypt(key, iv, aad, b"", tag=secrets.token_bytes(16))
         self.assertEqual(str(cm.exception), "empty ciphertext")
 
+    def test_gcm_decrypt_tag_error(self):
+        key = secrets.token_bytes(SM4_KEY_SIZE)
+        iv = secrets.token_bytes(SM4_BLOCK_SIZE)
+        aad = secrets.token_bytes(16)
+        plaintext = b"hello world"
+        ciphertext, tag = sm4_gcm_encrypt(key, iv, aad, plaintext=plaintext)
+
+        # tag 长度非法（合法范围 12 ~ 16）
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_gcm_decrypt(
+                key, iv=iv, aad=aad, ciphertext=ciphertext, tag=b"1" * 8
+            )
+        self.assertEqual(str(cm.exception), "invalid sm4 tag length")
+        # tag 不匹配 → 认证失败，而不是库内部错误
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_gcm_decrypt(
+                key, iv=iv, aad=aad, ciphertext=ciphertext, tag=secrets.token_bytes(16)
+            )
+        self.assertEqual(str(cm.exception), "authentication failed")
+        # 正确 tag 仍可解密
+        got_plaintext = sm4_gcm_decrypt(
+            key, iv=iv, aad=aad, ciphertext=ciphertext, tag=tag
+        )
+        self.assertEqual(got_plaintext, plaintext)
+
     def test_cbc_generated_data(self):
         key_path = script_dir / "data" / "sm4_generated_key.json"
         d = json.loads(key_path.read_text(encoding="utf-8"))
