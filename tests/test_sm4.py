@@ -7,6 +7,7 @@ from pathlib import Path
 from gmssl_pyx import (
     SM4_BLOCK_SIZE,
     SM4_KEY_SIZE,
+    GmsslInnerError,
     InvalidValueError,
     sm4_cbc_padding_decrypt,
     sm4_cbc_padding_encrypt,
@@ -61,6 +62,16 @@ class SM4TestCase(unittest.TestCase):
         with self.assertRaises(InvalidValueError) as cm:
             sm4_cbc_padding_decrypt(key, iv, b"")
         self.assertEqual(str(cm.exception), "empty ciphertext")
+
+        # 密文长度不是 16 的倍数，必须抛异常而不是返回数据
+        with self.assertRaises(GmsslInnerError):
+            sm4_cbc_padding_decrypt(key, iv, b"1" * 17)
+        # PKCS#7 padding 非法，必须抛异常而不是返回数据
+        ciphertext = sm4_cbc_padding_encrypt(key, iv, b"hello world")
+        bad = bytearray(ciphertext)
+        bad[-1] = 9
+        with self.assertRaises(GmsslInnerError):
+            sm4_cbc_padding_decrypt(key, iv, bytes(bad))
 
     def test_ctr_encrypt_and_decrypt(self):
         for i in range(3):

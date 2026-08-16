@@ -21,10 +21,17 @@ HexStr = str
 
 def decompress_sm2_public_key(key: bytes, a: int, b: int, p: int) -> bytes:
     prefix = key[0]
+    if prefix not in (2, 3):
+        raise InvalidValueError("invalid public key")
     x = int.from_bytes(key[1:], "big")
+    if x >= p:
+        raise InvalidValueError("invalid public key")
     # y^2 = (x^3 + ax + b) % p
     y_sq = (x**3 + a * x + b) % p
     y = pow(y_sq, (p + 1) // 4, p)
+    # 校验 y 是 x 对应的合法平方根，即点 (x, y) 必须在曲线上
+    if (y * y) % p != y_sq:
+        raise InvalidValueError("invalid public key")
     # y 是偶数，前缀为 '\x02' ；奇数则是 '\x03'
     if (prefix - 2) != (y % 2):
         # y 的奇偶与前缀表示不同
@@ -39,10 +46,15 @@ def normalize_sm2_public_key(public_key: t.Union[HexStr, bytes]) -> bytes:
         public_key: 16 进制字符串或者字节串
 
     Returns: 64 字节的字节串
+
+    Raises: InvalidValueError
     """
     pk: bytes = public_key
     if not isinstance(public_key, bytes):
-        pk = binascii.unhexlify(public_key)
+        try:
+            pk = binascii.unhexlify(public_key)
+        except binascii.Error as e:
+            raise InvalidValueError("invalid public key") from e
 
     if len(pk) == 65:
         if pk[0] != 4:

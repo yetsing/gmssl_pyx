@@ -125,6 +125,24 @@ class SM2TestCase(unittest.TestCase):
         self.assertTrue(issubclass(GmsslInnerError, Exception))
         self.assertTrue(issubclass(InvalidValueError, GmsslInnerError))
 
+    def test_all_zero_public_key(self):
+        # 全零公钥是无穷远点，不是合法公钥，必须拒绝
+        # 回归测试：sm2_z256_point_from_bytes 对无穷远点返回 0 而非 -1，
+        # 之前包装层只判断 == -1 导致放行，sm2_encrypt 会产出无法解密的密文
+        public_key = b"\x00" * 64
+        private_key = secrets.token_bytes(32)
+        message = b"hello world"
+        with self.assertRaises(InvalidValueError):
+            sm2_encrypt(public_key, message)
+        with self.assertRaises(InvalidValueError):
+            sm2_verify(public_key, message, b"\x30\x06\x02\x01\x01\x02\x01\x01")
+        with self.assertRaises(InvalidValueError):
+            sm2_verify_sm3_digest(
+                public_key, secrets.token_bytes(32), b"\x30\x06\x02\x01\x01\x02\x01\x01"
+            )
+        with self.assertRaises(InvalidValueError):
+            sm2_sign(private_key, public_key, message)
+
     def test_sm2_sign_and_verify(self):
         public_key, private_key = sm2_key_generate()
         message_length = random.randint(1, 1024)
@@ -208,6 +226,33 @@ class SM2TestCase(unittest.TestCase):
             compressed_public_key = b"\x03" + raw_public_key[:32]
         k1 = normalize_sm2_public_key(compressed_public_key)
         self.assertEqual(k1, raw_public_key)
+
+    def test_normalize_sm2_public_key_error(self):
+        # x 不在曲线上（x = 2^256 - 1 不是合法 x 坐标）
+        with self.assertRaises(InvalidValueError):
+            normalize_sm2_public_key(b"\x02" + b"\xff" * 32)
+        with self.assertRaises(InvalidValueError):
+            normalize_sm2_public_key(b"\x03" + b"\xff" * 32)
+        # x 超出素数 p
+        p = int(
+            "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF",
+            16,
+        )
+        with self.assertRaises(InvalidValueError):
+            normalize_sm2_public_key(b"\x02" + p.to_bytes(32, "big"))
+        # 非法压缩前缀
+        with self.assertRaises(InvalidValueError):
+            normalize_sm2_public_key(b"\x00" + b"\x01" * 32)
+        with self.assertRaises(InvalidValueError):
+            normalize_sm2_public_key(b"\x04" + b"\x01" * 32)
+        # 非法 hex 字符串
+        with self.assertRaises(InvalidValueError):
+            normalize_sm2_public_key("zz")
+        with self.assertRaises(InvalidValueError):
+            normalize_sm2_public_key("abc")
+        # 长度非法
+        with self.assertRaises(InvalidValueError):
+            normalize_sm2_public_key(b"\x02" + b"\x01" * 31)
 
     def test_randbytes(self):
         for i in range(1, 257):

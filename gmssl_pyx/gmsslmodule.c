@@ -40,9 +40,8 @@ static PyObject *gmsslext_sm2_key_generate(PyObject *self,
     return NULL;
   }
   sm2_z256_to_bytes(sm2_key.private_key, private_key);
-  return Py_BuildValue("y#y#", (const char *)public_key,
-                       (Py_ssize_t)64, (const char *)private_key,
-                       (Py_ssize_t)32);
+  return Py_BuildValue("y#y#", (const char *)public_key, (Py_ssize_t)64,
+                       (const char *)private_key, (Py_ssize_t)32);
 }
 
 static PyObject *gmsslext_sm2_encrypt(PyObject *self, PyObject *args,
@@ -72,7 +71,8 @@ static PyObject *gmsslext_sm2_encrypt(PyObject *self, PyObject *args,
     return NULL;
   }
   SM2_Z256_POINT pub;
-  if (sm2_z256_point_from_bytes(&pub, (const uint8_t *)public_key) == -1) {
+  if (sm2_z256_point_from_bytes(&pub, (const uint8_t *)public_key) !=
+      GMSSL_INNER_OK) {
     PyErr_SetString(InvalidValueError, "invalid public key");
     return NULL;
   }
@@ -200,7 +200,8 @@ static PyObject *gmsslext_sm2_verify_sm3_digest(PyObject *self, PyObject *args,
     return NULL;
   }
   SM2_Z256_POINT pub;
-  if (sm2_z256_point_from_bytes(&pub, (const uint8_t *)public_key) == -1) {
+  if (sm2_z256_point_from_bytes(&pub, (const uint8_t *)public_key) !=
+      GMSSL_INNER_OK) {
     PyErr_SetString(InvalidValueError, "invalid public key");
     return NULL;
   }
@@ -278,7 +279,8 @@ static PyObject *gmsslext_sm2_sign(PyObject *self, PyObject *args,
   SM2_KEY sm2_key;
   SM2_SIGN_CTX sign_ctx;
   SM2_Z256_POINT pub;
-  if (sm2_z256_point_from_bytes(&pub, (const uint8_t *)public_key) == -1) {
+  if (sm2_z256_point_from_bytes(&pub, (const uint8_t *)public_key) !=
+      GMSSL_INNER_OK) {
     PyErr_SetString(InvalidValueError, "invalid public_key");
     return NULL;
   }
@@ -379,7 +381,8 @@ static PyObject *gmsslext_sm2_verify(PyObject *self, PyObject *args,
   SM2_KEY sm2_key;
   SM2_VERIFY_CTX sign_ctx;
   SM2_Z256_POINT pub;
-  if (sm2_z256_point_from_bytes(&pub, (const uint8_t *)public_key) == -1) {
+  if (sm2_z256_point_from_bytes(&pub, (const uint8_t *)public_key) !=
+      GMSSL_INNER_OK) {
     PyErr_SetString(InvalidValueError, "invalid public_key");
     return NULL;
   }
@@ -536,8 +539,14 @@ static PyObject *gmsslext_sm4_cbc_padding_encrypt(PyObject *self,
     return PyErr_NoMemory();
   }
   sm4_set_encrypt_key(&sm4_key, (uint8_t *)key);
-  sm4_cbc_padding_encrypt(&sm4_key, (uint8_t *)iv, (uint8_t *)plaintext,
+  int ret = sm4_cbc_padding_encrypt(&sm4_key, (uint8_t *)iv, (uint8_t *)plaintext,
                           plaintext_length, (uint8_t *)out, (size_t *)&outlen);
+  if (ret != GMSSL_INNER_OK) {
+    PyMem_RawFree(out);
+    PyErr_SetString(GmsslInnerError,
+                    "libgmssl inner error in sm4_cbc_padding_encrypt");
+    return NULL;
+  }
   PyObject *ciphertext_obj = Py_BuildValue("y#", out, outlen);
   PyMem_RawFree(out);
   return ciphertext_obj;
@@ -581,8 +590,15 @@ static PyObject *gmsslext_sm4_cbc_padding_decrypt(PyObject *self,
     return PyErr_NoMemory();
   }
   sm4_set_decrypt_key(&sm4_key, (uint8_t *)key);
-  sm4_cbc_padding_decrypt(&sm4_key, (uint8_t *)iv, (uint8_t *)ciphertext,
-                          ciphertext_length, (uint8_t *)out, (size_t *)&outlen);
+  int ret = sm4_cbc_padding_decrypt(&sm4_key, (uint8_t *)iv,
+                                    (uint8_t *)ciphertext, ciphertext_length,
+                                    (uint8_t *)out, (size_t *)&outlen);
+  if (ret != GMSSL_INNER_OK) {
+    PyMem_RawFree(out);
+    PyErr_SetString(GmsslInnerError,
+                    "libgmssl inner error in sm4_cbc_padding_decrypt");
+    return NULL;
+  }
   PyObject *plaintext_obj = Py_BuildValue("y#", out, outlen);
   PyMem_RawFree(out);
   return plaintext_obj;

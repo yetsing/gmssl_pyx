@@ -826,7 +826,7 @@ static PyObject *SM9MasterKey_encrypt_to_der(SM9MasterKeyObject *self,
   return Py_BuildValue("y#", buf, (Py_ssize_t)len);
 }
 
-int sm9_enc_master_key_info_decrypt_from_pem_v3_1_1(SM9_ENC_MASTER_KEY *msk, const char *pass, FILE *fp)
+static int sm9_enc_master_key_info_decrypt_from_pem_v3_1_1(SM9_ENC_MASTER_KEY *msk, const char *pass, FILE *fp)
 {
 	uint8_t buf[SM9_MAX_ENCED_PRIVATE_KEY_INFO_SIZE];
 	const uint8_t *cp = buf;
