@@ -13,6 +13,7 @@
 #include "gmssl/sm9.h"
 #include "gmssl/pem.h"
 #include "gmssl/asn1.h"
+#include "gmssl/mem.h"
 
 #include "gmsslext.h"
 #include "gmsslext_sm9.h"
@@ -44,6 +45,7 @@ typedef struct {
 } SM9PrivateKeyObject;
 
 static void SM9PrivateKey_dealloc(SM9PrivateKeyObject *self) {
+  gmssl_secure_clear(&self->key, sizeof(self->key));
   Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
@@ -405,6 +407,7 @@ typedef struct {
 } SM9MasterPublicKeyObject;
 
 static void SM9MasterPublicKey_dealloc(SM9MasterPublicKeyObject *self) {
+  gmssl_secure_clear(&self->master_public, sizeof(self->master_public));
   Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
@@ -648,6 +651,7 @@ typedef struct {
 } SM9MasterKeyObject;
 
 static void SM9MasterKey_dealloc(SM9MasterKeyObject *self) {
+  gmssl_secure_clear(&self->master, sizeof(self->master));
   Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
