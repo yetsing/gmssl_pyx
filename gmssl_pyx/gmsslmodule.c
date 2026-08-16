@@ -5,6 +5,8 @@
 #define PY_SSIZE_T_CLEAN
 
 #include <Python.h>
+#include <stdint.h>
+#include <string.h>
 
 #include "gmssl/rand.h"
 #include "gmssl/sm2.h"
@@ -995,7 +997,6 @@ PyMODINIT_FUNC PyInit_gmsslext(void) {
   if (PyModule_AddObject(m, "SM9MasterPublicKey",
                          (PyObject *)&GmsslextSM9MasterPublicKeyType) < 0) {
     Py_DECREF(&GmsslextSM9MasterPublicKeyType);
-    Py_DECREF(&GmsslextSM9PrivateKeyType);
     Py_DECREF(m);
     return NULL;
   }
@@ -1003,8 +1004,6 @@ PyMODINIT_FUNC PyInit_gmsslext(void) {
   if (PyModule_AddObject(m, "SM9MasterKey",
                          (PyObject *)&GmsslextSM9MasterKeyType) < 0) {
     Py_DECREF(&GmsslextSM9MasterKeyType);
-    Py_DECREF(&GmsslextSM9MasterPublicKeyType);
-    Py_DECREF(&GmsslextSM9PrivateKeyType);
     Py_DECREF(m);
     return NULL;
   }

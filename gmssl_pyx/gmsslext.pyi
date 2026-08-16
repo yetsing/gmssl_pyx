@@ -58,7 +58,7 @@ def sm2_verify_sm3_digest(public_key: bytes, digest: bytes, signature: bytes) ->
     """使用 SM2 验证 SM3 摘要和签名数据
 
     Args:
-        public_key: 64 字节的私钥
+        public_key: 64 字节的公钥
         digest: SM3 摘要数据，长度为 32 字节
         signature: 签名数据，编码格式为 ASN.1 DER ，模式为 rs
 
