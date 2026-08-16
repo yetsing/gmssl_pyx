@@ -59,3 +59,6 @@ __pycache__
 zzz/
 .cache/
 compile_commands.json
+
+# 运行示例/测试生成的密钥产物
+*.pem
