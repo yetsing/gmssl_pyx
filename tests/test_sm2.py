@@ -181,6 +181,10 @@ class SM2TestCase(unittest.TestCase):
         )
         self.assertFalse(verify)
 
+        signature = sm2_sign(private_key, public_key, b"")
+        verify = sm2_verify(public_key, b"", signature)
+        self.assertTrue(verify)
+
     def test_sm2_sign_and_verify_error(self):
         public_key, private_key = sm2_key_generate()
         message = b"hello world"

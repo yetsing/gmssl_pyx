@@ -26,6 +26,13 @@ class SM3TestCase(unittest.TestCase):
         got_hash = sm3_hash(message=message)
         self.assertEqual(got_hash, expected_hash)
 
+        expected_hash = binascii.unhexlify(
+            "1ab21d8355cfa17f8e61194831e81a8f22bec8c728fefb747ed035eb5082aa2b",
+        )
+        message = b""
+        got_hash = sm3_hash(message=message)
+        self.assertEqual(got_hash, expected_hash)
+
     def test_hash_error(self):
         pass
 
@@ -42,6 +49,13 @@ class SM3TestCase(unittest.TestCase):
         hmac_data = sm3_hmac(key, message=message)
         expected_hex = (
             "92aee474f6111e74f4745b0b10973eb2c397fa883ffa03df7b0d401a08b4a641"
+        )
+        self.assertEqual(hmac_data.hex(), expected_hex)
+
+        message = b""
+        hmac_data = sm3_hmac(key, message=message)
+        expected_hex = (
+            "639486f482c0ec52cbd4900b9277b7c2132ff049e6a818b7dcdc13ebe1668dfd"
         )
         self.assertEqual(hmac_data.hex(), expected_hex)
 

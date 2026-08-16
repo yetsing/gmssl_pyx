@@ -1,7 +1,6 @@
 /*
  * GmSSL python c extension
  */
-#include "gmssl/sm2_z256.h"
 #define PY_SSIZE_T_CLEAN
 
 #include <Python.h>
@@ -10,6 +9,7 @@
 
 #include "gmssl/rand.h"
 #include "gmssl/sm2.h"
+#include "gmssl/sm2_z256.h"
 #include "gmssl/sm3.h"
 #include "gmssl/sm4.h"
 
