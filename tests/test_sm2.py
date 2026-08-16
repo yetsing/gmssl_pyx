@@ -191,18 +191,12 @@ class SM2TestCase(unittest.TestCase):
             sm2_sign(private_key, public_key[:63], message)
         self.assertEqual(str(cm.exception), "invalid public_key or private_key length")
         with self.assertRaises(InvalidValueError) as cm:
-            sm2_sign(private_key, public_key, b"")
-        self.assertEqual(str(cm.exception), "empty message")
-        with self.assertRaises(InvalidValueError) as cm:
             sm2_sign(private_key, public_key, message, signer_id=b"")
         self.assertEqual(str(cm.exception), "invalid signer_id length")
 
         with self.assertRaises(InvalidValueError) as cm:
             sm2_verify(public_key[:63], message, b"signature")
         self.assertEqual(str(cm.exception), "invalid public_key")
-        with self.assertRaises(InvalidValueError) as cm:
-            sm2_verify(public_key, b"", b"signature")
-        self.assertEqual(str(cm.exception), "empty message")
         with self.assertRaises(InvalidValueError) as cm:
             sm2_verify(public_key, message, b"")
         self.assertEqual(str(cm.exception), "empty signature")

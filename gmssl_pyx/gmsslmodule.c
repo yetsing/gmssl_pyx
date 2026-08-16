@@ -273,8 +273,8 @@ static PyObject *gmsslext_sm2_sign(PyObject *self, PyObject *args,
                     "invalid public_key or private_key length");
     return NULL;
   }
-  if (message_length <= 0) {
-    PyErr_SetString(InvalidValueError, "empty message");
+  if (message_length < 0) {
+    PyErr_SetString(InvalidValueError, "invalid message");
     return NULL;
   }
 
@@ -375,8 +375,8 @@ static PyObject *gmsslext_sm2_verify(PyObject *self, PyObject *args,
     PyErr_SetString(InvalidValueError, "empty signature");
     return NULL;
   }
-  if (message_length <= 0) {
-    PyErr_SetString(InvalidValueError, "empty message");
+  if (message_length < 0) {
+    PyErr_SetString(InvalidValueError, "invalid message");
     return NULL;
   }
 
@@ -425,8 +425,8 @@ static PyObject *gmsslext_sm3_hash(PyObject *self, PyObject *args,
   if (!ok) {
     return NULL;
   }
-  if (message_length <= 0) {
-    PyErr_SetString(InvalidValueError, "empty message");
+  if (message_length < 0) {
+    PyErr_SetString(InvalidValueError, "invalid message");
     return NULL;
   }
   SM3_CTX sm3_ctx;
@@ -456,8 +456,8 @@ static PyObject *gmsslext_sm3_hmac(PyObject *self, PyObject *args,
     PyErr_SetString(InvalidValueError, "empty key");
     return NULL;
   }
-  if (message_length <= 0) {
-    PyErr_SetString(InvalidValueError, "empty message");
+  if (message_length < 0) {
+    PyErr_SetString(InvalidValueError, "invalid message");
     return NULL;
   }
   SM3_HMAC_CTX hmac_ctx;
