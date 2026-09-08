@@ -26,10 +26,12 @@ class SM3TestCase(unittest.TestCase):
         got_hash = sm3_hash(message=message)
         self.assertEqual(got_hash, expected_hash)
 
-    def test_hash_error(self):
-        with self.assertRaises(InvalidValueError) as cm:
-            sm3_hash(b"")
-        self.assertEqual(str(cm.exception), "empty message")
+        expected_hash = binascii.unhexlify(
+            "1ab21d8355cfa17f8e61194831e81a8f22bec8c728fefb747ed035eb5082aa2b",
+        )
+        message = b""
+        got_hash = sm3_hash(message=message)
+        self.assertEqual(got_hash, expected_hash)
 
     def test_hmac(self):
         n = random.randint(1, 4096)
@@ -47,11 +49,15 @@ class SM3TestCase(unittest.TestCase):
         )
         self.assertEqual(hmac_data.hex(), expected_hex)
 
+        message = b""
+        hmac_data = sm3_hmac(key, message=message)
+        expected_hex = (
+            "639486f482c0ec52cbd4900b9277b7c2132ff049e6a818b7dcdc13ebe1668dfd"
+        )
+        self.assertEqual(hmac_data.hex(), expected_hex)
+
     def test_hmac_error(self):
         key = secrets.token_bytes(32)
-        with self.assertRaises(InvalidValueError) as cm:
-            sm3_hmac(key, b"")
-        self.assertEqual(str(cm.exception), "empty message")
         with self.assertRaises(InvalidValueError) as cm:
             sm3_hmac(b"", b"hello")
         self.assertEqual(str(cm.exception), "empty key")

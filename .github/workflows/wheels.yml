@@ -106,7 +106,7 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_TEST_COMMAND: python -m unittest discover {project}/tests
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ matrix.python }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl

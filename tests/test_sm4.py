@@ -7,6 +7,7 @@ from pathlib import Path
 from gmssl_pyx import (
     SM4_BLOCK_SIZE,
     SM4_KEY_SIZE,
+    GmsslInnerError,
     InvalidValueError,
     sm4_cbc_padding_decrypt,
     sm4_cbc_padding_encrypt,
@@ -61,6 +62,18 @@ class SM4TestCase(unittest.TestCase):
         with self.assertRaises(InvalidValueError) as cm:
             sm4_cbc_padding_decrypt(key, iv, b"")
         self.assertEqual(str(cm.exception), "empty ciphertext")
+
+        # 密文长度不是 16 的倍数，必须抛异常而不是返回数据
+        with self.assertRaises(GmsslInnerError):
+            sm4_cbc_padding_decrypt(key, iv, b"1" * 17)
+        # PKCS#7 padding 非法，必须抛异常而不是返回数据
+        ciphertext = sm4_cbc_padding_encrypt(key, iv, b"hello world")
+        bad = bytearray(ciphertext)
+        for i in range(len(bad)):
+            bad[i] = i % 256
+        with self.assertRaises(GmsslInnerError):
+            unexpected = sm4_cbc_padding_decrypt(key, iv, bytes(bad))
+            print(f"unexpected: <{unexpected}>")
 
     def test_ctr_encrypt_and_decrypt(self):
         for i in range(3):
@@ -150,6 +163,31 @@ class SM4TestCase(unittest.TestCase):
         with self.assertRaises(InvalidValueError) as cm:
             sm4_gcm_decrypt(key, iv, aad, b"", tag=secrets.token_bytes(16))
         self.assertEqual(str(cm.exception), "empty ciphertext")
+
+    def test_gcm_decrypt_tag_error(self):
+        key = secrets.token_bytes(SM4_KEY_SIZE)
+        iv = secrets.token_bytes(SM4_BLOCK_SIZE)
+        aad = secrets.token_bytes(16)
+        plaintext = b"hello world"
+        ciphertext, tag = sm4_gcm_encrypt(key, iv, aad, plaintext=plaintext)
+
+        # tag 长度非法（合法范围 12 ~ 16）
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_gcm_decrypt(
+                key, iv=iv, aad=aad, ciphertext=ciphertext, tag=b"1" * 8
+            )
+        self.assertEqual(str(cm.exception), "invalid sm4 tag length")
+        # tag 不匹配 → 认证失败，而不是库内部错误
+        with self.assertRaises(InvalidValueError) as cm:
+            sm4_gcm_decrypt(
+                key, iv=iv, aad=aad, ciphertext=ciphertext, tag=secrets.token_bytes(16)
+            )
+        self.assertEqual(str(cm.exception), "authentication failed")
+        # 正确 tag 仍可解密
+        got_plaintext = sm4_gcm_decrypt(
+            key, iv=iv, aad=aad, ciphertext=ciphertext, tag=tag
+        )
+        self.assertEqual(got_plaintext, plaintext)
 
     def test_cbc_generated_data(self):
         key_path = script_dir / "data" / "sm4_generated_key.json"
