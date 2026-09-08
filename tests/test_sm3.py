@@ -33,9 +33,6 @@ class SM3TestCase(unittest.TestCase):
         got_hash = sm3_hash(message=message)
         self.assertEqual(got_hash, expected_hash)
 
-    def test_hash_error(self):
-        pass
-
     def test_hmac(self):
         n = random.randint(1, 4096)
         message = secrets.token_bytes(n)
