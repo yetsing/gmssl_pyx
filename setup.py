@@ -24,16 +24,16 @@ def get_version() -> str:
     return version_dict["__version__"]
 
 
-def download_source_code():
-    if os.path.exists("GmSSL-3.1.0"):
-        shutil.rmtree("GmSSL-3.1.0")
-    source_path = "gmssl.tar.gz"
-    if not os.path.exists(source_path):
-        source_url = "https://github.com/guanzhi/GmSSL/archive/refs/tags/v3.1.0.tar.gz"
-        urllib.request.urlretrieve(source_url, source_path)
-    # 解压到当前文件夹
-    with tarfile.open(source_path) as tar:
-        tar.extractall()
+# def download_source_code():
+#     if os.path.exists("GmSSL-3.1.0"):
+#         shutil.rmtree("GmSSL-3.1.0")
+#     source_path = "gmssl.tar.gz"
+#     if not os.path.exists(source_path):
+#         source_url = "https://github.com/guanzhi/GmSSL/archive/refs/tags/v3.1.0.tar.gz"
+#         urllib.request.urlretrieve(source_url, source_path)
+#     # 解压到当前文件夹
+#     with tarfile.open(source_path) as tar:
+#         tar.extractall()
 
 
 def compile_gmssl():
