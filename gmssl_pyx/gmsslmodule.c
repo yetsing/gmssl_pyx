@@ -692,7 +692,7 @@ static PyObject *gmsslext_sm4_ctr_decrypt(PyObject *self, PyObject *args,
   }
   sm4_set_encrypt_key(&sm4_key, (uint8_t *)key);
 
-  // sm4_ctr_decrypt 会修改 ctr ，会导致 Python 端调用者的 ctr 也发生改变，copy
+  // sm4_ctr_encrypt 会修改 ctr ，会导致 Python 端调用者的 ctr 也发生改变，copy
   // 一份来用
   unsigned char temp_ctr[SM4_BLOCK_SIZE];
   memcpy(temp_ctr, ctr, SM4_BLOCK_SIZE);
