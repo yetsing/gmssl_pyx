@@ -71,7 +71,8 @@ class SM4TestCase(unittest.TestCase):
         bad = bytearray(ciphertext)
         bad[-1] = 9
         with self.assertRaises(GmsslInnerError):
-            sm4_cbc_padding_decrypt(key, iv, bytes(bad))
+            unexpected = sm4_cbc_padding_decrypt(key, iv, bytes(bad))
+            print(f"unexpected: <{unexpected}>")
 
     def test_ctr_encrypt_and_decrypt(self):
         for i in range(3):
