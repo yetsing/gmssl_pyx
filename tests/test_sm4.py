@@ -69,7 +69,8 @@ class SM4TestCase(unittest.TestCase):
         # PKCS#7 padding 非法，必须抛异常而不是返回数据
         ciphertext = sm4_cbc_padding_encrypt(key, iv, b"hello world")
         bad = bytearray(ciphertext)
-        bad[-1] = 9
+        for i in range(len(bad)):
+            bad[i] = i % 256
         with self.assertRaises(GmsslInnerError):
             unexpected = sm4_cbc_padding_decrypt(key, iv, bytes(bad))
             print(f"unexpected: <{unexpected}>")
